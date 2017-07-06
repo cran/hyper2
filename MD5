@@ -1,7 +1,7 @@
-af5800ad8a1def92187be54dd33bb946 *DESCRIPTION
+1a3756564e1c0db864fd72a8944cb65d *DESCRIPTION
 5112e855695fe3b551b283c55176934b *NAMESPACE
 0c1709e5657babbbbbdbecb45b564f91 *R/RcppExports.R
-6930729a9d2d8df67b4eb9458ec2c74e *R/hyper2.R
+09950f0791c1fa7437329ec3e8fe06b7 *R/hyper2.R
 407901cea94ab0ba422540b48a5b870f *build/vignette.rds
 b44582083e66f01676c3f005b442a20d *data/chess.rda
 18e6fb3e2a2d3d9a46bb41430f545fc1 *data/masterchef.rda
@@ -9,12 +9,12 @@ a732a0b85c89a66987d0b054ce9a2b09 *data/rowing.rda
 14ebabaad5d046f39dd79e56c1200aa4 *data/super_rugby.rda
 d8d300446b578af4448f21edc30e510d *inst/doc/hyper2.R
 3f46c95db3e45ad1ba8b2c0868e0317e *inst/doc/hyper2.Rnw
-715f392d4af1644c0849c07f839ba2c7 *inst/doc/hyper2.pdf
+3a75747b93b4e5728b54284f74cc1be1 *inst/doc/hyper2.pdf
 b35a3d81304500052a4896f2d685c927 *inst/laura_confidence_interval.R
 6b34067602ba95afe9091d44b59160d4 *inst/masterchef_series6_allrounds.R
 2df01a5a764219f3ca069d6fe350cf6c *inst/rowing.txt
 bb6b1d970f86a9e97600fdbff7e3be4b *inst/rowing_analysis.R
-4bde389b5ac2f744f4801efec1120d74 *inst/rowing_minimal.txt
+9c026551b0b2d4684cc04e9d385cbfd4 *inst/rowing_minimal.txt
 22bd4ca7b0c67ee9fe309c031292ef04 *man/Extract.Rd
 a9c43384cf8377926766f3fbb06d0a1c *man/Ops.hyper2.Rd
 d19f44951bbe6e274743ef3951ea3f4e *man/Print.Rd
@@ -36,6 +36,6 @@ e2c7d5023222ea547f659eae86dd7a98 *man/mult_grid.Rd
 fd810213e2500115c93172f189c06bb7 *man/rugby.Rd
 2f7d6329c4dd3f679e27d20109826d8a *src/RcppExports.cpp
 63b7ac2e74e34e6e2b2a5dcd9c15337d *src/hyper2_init.c
-ded274e0628baa513e28741e6f5df8e5 *src/hyperdirichlet2.cpp
+1c7e0b8845cccd75ea75156ac9dac91f *src/hyperdirichlet2.cpp
 3f46c95db3e45ad1ba8b2c0868e0317e *vignettes/hyper2.Rnw
 bd5129d192d913affe54c6ab2cb61904 *vignettes/hyper2.bib

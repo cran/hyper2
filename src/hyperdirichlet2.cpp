@@ -12,7 +12,7 @@ using namespace std;
 using namespace Rcpp;
 
 typedef set<unsigned int> bracket;
-typedef map<bracket, double> hyper2;
+typedef map<bracket, long double> hyper2;
 
 // again it might be nice to use unsigned_map above, but this would
 // need a hash function and this would require further work.

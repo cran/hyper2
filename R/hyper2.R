@@ -321,7 +321,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 }
 
 `maxp` <- function(H, startp=NULL, give=FALSE, ...){
-    SMALL <- 1e-10
+    SMALL <- 1e-6
     
     n <- size(H)
     if(is.null(startp)){
