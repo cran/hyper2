@@ -29,19 +29,25 @@ Extract or replace parts of a hyper2 object
  may be in any order (the brackets and indeed the powers are not stored
  in any particular order).
 
- The replace method, \code{a[L] <- value}, the index \code{L} is a list
+ The replace method, \code{H[L] <- value}, the index \code{L} is a list
  specifying the brackets to be overwritten; argument \code{value} is not
  recycled unless it is of length 1.
 
- If the index argument is missing, viz \code{a[] <- b}, this is a
- special case.  Argument \code{b} must be a \code{hyper2} object, and
- the idiom effectively executes \code{a[brackets(b)] <- powers(b)}, but
- more efficiently.  This special case is included in the package because
- it has a very natural \code{C++} expression [function
- \code{overwrite()} in the \code{src/} directory] that was too neat to
- omit.
+ If the index argument is missing, viz \code{H1[] <- H2}, this is a
+ special case.  Argument \code{H1} must be a \code{hyper2} object, and
+ the idiom effectively executes \code{H1[brackets(H2)] <- powers(H2)},
+ but more efficiently (note that this operation is well-defined even
+ though the order of the brackets is arbitrary).  This special case is
+ included in the package because it has a very natural \code{C++}
+ expression [function \code{overwrite()} in the \code{src/} directory]
+ that was too neat to omit.
 
+ Altering (incrementing or decrementing) the power of a single bracket
+ is possible using idiom like \code{H[x] <- H[x] + 1}; this is
+ documented at \code{Ops.hyper2}, specifically
+ \code{hyper2_sum_numeric()}.
 }
+
 \value{
 The extractor method returns a \code{hyper2} object, restricted to the
 elements specified
@@ -51,12 +57,13 @@ elements specified
 Use \code{powers()} and \code{brackets()} to extract a numeric vector of
  powers or a list of integer vectors respectively.
 
-Replacement idiom \code{A[x] <- val} cannot use non-trivial recycling.
-This is because the elements of \code{a} are not stored in a
-system-dependent order.
+Replacement idiom \code{H[x] <- val} cannot use non-trivial recycling.
+This is because the elements of \code{H} are stored in an arbitrary
+order, but the elements of \code{val} are stored in a particular order.
+Also see function \code{hyper2_sum_numeric()}.
 
 }
-\seealso{\code{\link{hyper2}}}
+\seealso{\code{\link{hyper2}},\code{\link{Ops.hyper2}}}
 \examples{
 data(chess)
 

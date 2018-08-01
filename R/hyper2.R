@@ -30,12 +30,32 @@ setGeneric("pnames"  ,function(x){standardGeneric("pnames"  )})
 setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 `pnames<-` <- function(x,value){UseMethod("pnames<-")}
 `pnames<-.hyper2` <- function(x,value){
-  hyper2(brackets(x),powers(x),pnames=value)
+  if(identical(pnames(x),NA)){
+    return(hyper2(brackets(x),powers(x),pnames=value))
+  } else {
+    return(change_pnames(x,value))
+  }
 }
 ## setter methods end
 
-`is_constant` <- function(H){ length(brackets(H))==0 }
 
+`change_pnames` <- function(H,new_pnames){  # new_pnames is a character vector, eg c('a', 'b')
+  if(identical(pnames(H),NA)){return(hyper2(brackets(H),powers(H),pnames=new_pnames))}
+  if(identical(new_pnames,NA)){return(hyper2(brackets(H),powers(H)))}
+
+  stopifnot(all(pnames(H) %in% new_pnames))
+  b <- brackets(H)
+  pn <- pnames(H)
+  pow <- powers(H)
+  out <- hyper2(pnames=new_pnames)
+  for(i in seq_along(b)){
+#    out[new_pnames[new_pnames %in% pn[b[[i]]]]]  <- pow[i]
+    out[which(new_pnames %in% pn[b[[i]]])]  <- pow[i]
+  }
+  return(out)
+}
+
+`is_constant` <- function(H){ length(brackets(H))==0 }
 
 `is_valid_hyper2` <- function(L,d,pnames){
   stopifnot(is.list(L))
@@ -141,11 +161,8 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
   } else if(identical(pnames(e2),NA) & !identical(pnames(e1),NA)){
     jj <- pnames(e1)
   } else if(!identical(pnames(e2),NA) & !identical(pnames(e1),NA)){
-    if(size(e2)>size(e1)){
-      jj <- pnames(e2)
-    } else {
-      jj <- pnames(e1)
-    }
+    stopifnot(identical(pnames(e1),pnames(e2)))
+    jj <- pnames(e1)
   } else {
     stop("this cannot happen")
   }
@@ -153,16 +170,15 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
   return(hyper2(out[[1]],out[[2]],pnames=jj))
 }
 
-
-`lhyper2` <- function(H,p,log=TRUE){
+`loglik` <- function(H,p,log=TRUE){
   if(is.matrix(p)){
-    return(apply(p,1,function(o){.lhyper2_single(H,p=o, log=log)}))
+    return(apply(p,1,function(o){.loglik_single(H,p=o, log=log)}))
   } else {
-    return(.lhyper2_single(H,p,log=log))
+    return(.loglik_single(H,p,log=log))
   }
 }
 
-`.lhyper2_single` <- function(H,p,log=TRUE){
+`.loglik_single` <- function(H,p,log=TRUE){
   stopifnot(length(p) == size(H)-1)
   stopifnot(all(p>=0))
   stopifnot(sum(p)<=1)
@@ -180,6 +196,15 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
       brackets(e1),powers(e1),
       brackets(e2),powers(e2)
   )
+}
+
+`hyper2_sum_numeric` <- function(H,r){
+  pH <- powers(H)
+  if(length(pH) == 1){
+    return(pH+r)
+  } else {
+    stop('H + r is only defined if length(powers(H))==1 because the order of the powers is undefined')
+  }
 }
 
 `hyper2_prod` <- function(H,n){
@@ -200,7 +225,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     stop("Unary operator '", .Generic, "' is not implemented for hyper2 objects")
     }
 
-  if (!is.element(.Generic, c("+", "==", "!=", "*", "^" ))){
+  if (!is.element(.Generic, c("+", "-", "==", "!=", "*", "^" ))){
     stop("Binary operator '", .Generic, "' is not implemented for hyper2 objects")
   }
   
@@ -214,18 +239,34 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     } else {
       stop("H1 ", .Generic, " H2 not defined")
     }
-  } else {  # H * n
-    stopifnot(is.element(.Generic, c("*")))
-    if(lclass && !rclass){
-      return(hyper2_prod(e1,e2))
-    } else if (!lclass && rclass){
-      return(hyper2_prod(e2,e1))
-    } else {
-    stop("method not defined for hyper2")
+  } else {  # one of lclass,rclass
+    if (.Generic == "*"){    # H * n
+      if(lclass && !rclass){
+        return(hyper2_prod(e1,e2))
+      } else if (!lclass && rclass){
+        return(hyper2_prod(e2,e1))
+      } else {
+        stop("method not defined for hyper2")
+      }
+    } else if (.Generic == "+"){  # H + x
+      if(lclass && !rclass){
+        return(hyper2_sum_numeric(e1,e2))
+      } else if (!lclass && rclass){
+        return(hyper2_sum_numeric(e2,e1))
+      } else {
+        stop("this cannot happen")
+      }
+    } else if (.Generic == "-"){
+      if(lclass && !rclass){
+        return(hyper2_sum_numeric(e1,-e2))
+      } else if (!lclass && rclass){
+        return(hyper2_sum_numeric(e2,-e1))
+      } else {
+        stop("this cannot happen")
+      }
     }
   }
 }
-  
 `character_to_number` <- function(char,pnames){ # char = c("a","b","D")
     stopifnot(all(char %in% pnames))
     unlist(apply(outer(char,pnames, "=="),1,which))
@@ -328,7 +369,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
         startp <- rep(1/n,n-1)
         }
 
-    objective <- function(p){ -lhyper2(H,p) }
+    objective <- function(p){ -loglik(H,p) }
     gradfun   <- function(p){ -(gradient(H,p))} #NB minus signs
     
     UI <- rbind(diag(nrow=n-1),-1)
@@ -482,7 +523,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 }
 
 `like_single_list` <- function(p,Lsub){;  # eg like_single(p,Lc)
-  sum(unlist(lapply(Lsub,lhyper2,p=p,log=FALSE)))
+  sum(unlist(lapply(Lsub,loglik,p=p,log=FALSE)))
   ## sum, because it can be any one of the orders specified in the
   ## elements of Lsub
 }
@@ -493,3 +534,53 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     return(out)
 }
 
+`dirichlet` <-  function(powers, alpha, pnames=NA){
+    if(!xor(missing(powers),missing(alpha))){
+        stop("supply exactly one of powers, alpha")
+    }
+
+    if(missing(powers)){
+        powers <- alpha-1
+    }
+    
+    if(is.na(pnames) & !is.null(names(powers))){
+        pnames <- names(powers)
+    }
+    hyper2(as.list(seq_along(powers)),d=powers,pnames=pnames)
+}
+
+`GD` <- function(alpha, beta, beta0=0, pnames=NA){
+  k <- length(alpha)
+  stopifnot(length(beta) == k-1)
+  
+  H <- dirichlet(powers=alpha-1,pnames=pnames)
+  for(i in 2:(k-1)){
+    H[(i:k)] <- beta[i-1] -(alpha[i]+beta[i])
+  }
+
+  H[k] <- beta[k-1]-1
+  H[seq_along(k)] <- beta0-(alpha[1]+beta[1])
+  return(H)   
+}
+
+`GD_wong` <- function(alpha, beta, pnames=NA){
+  k <- length(alpha)
+  stopifnot(length(beta) == k)
+
+  gamma <- beta[-k]-(alpha[-1]+beta[-1])
+  gamma <- c(gamma, beta[k]-1)
+  H <- dirichlet(powers=alpha-1,pnames=pnames)
+  for(i in 1:k){
+    H[(i+1):(k+1)] <- gamma[i]
+  }
+  return(H)   
+}
+
+`equalp` <- function(H){
+    n <- size(H)
+    rep(1/n,n)
+}
+
+`all_pnames` <- function(L){  # needs a list
+  L %>% lapply(function(x){x %>% pnames %>% as.character}) %>% c(recursive=TRUE) %>% unique %>% sort
+}
