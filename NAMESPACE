@@ -8,6 +8,7 @@ importFrom("utils", "head")
 importFrom("partitions","perms")
 
 importFrom("magrittr", "%>%", "%<>%")
+importFrom("cubature", "adaptIntegrate")
 
 import(methods)
 
@@ -31,4 +32,5 @@ S3method(Ops,hyper2)
 S3method(sum,hyper2)
 S3method(print,hyper2)
 S3method(head,hyper2)
+S3method(length,hyper2)
 

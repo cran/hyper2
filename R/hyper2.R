@@ -36,6 +36,9 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     return(change_pnames(x,value))
   }
 }
+
+`length.hyper2` <- function(x){length(x$brackets)}
+
 ## setter methods end
 
 
@@ -55,7 +58,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
   return(out)
 }
 
-`is_constant` <- function(H){ length(brackets(H))==0 }
+`is_constant` <- function(H){ length(H)==0 }
 
 `is_valid_hyper2` <- function(L,d,pnames){
   stopifnot(is.list(L))
@@ -361,7 +364,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
   }
 }
 
-`maxp` <- function(H, startp=NULL, give=FALSE, ...){
+`maxp` <- function(H, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, ...){
     SMALL <- 1e-6
     
     n <- size(H)
@@ -372,8 +375,14 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     objective <- function(p){ -loglik(H,p) }
     gradfun   <- function(p){ -(gradient(H,p))} #NB minus signs
     
-    UI <- rbind(diag(nrow=n-1),-1)
-    CI <- c(rep(SMALL,n-1),-1+SMALL)
+    UI <- rbind(
+        diag(nrow=n-1),  # regular: p1 >=0, p2 >= 0, ..., p_{n-1} >= 0
+        -1,              # fillup: p_n = 1-(p1+p2+...+p_{n-1}) >= 0
+        fcm)             # further problem-specific constraints
+    CI <- c(
+        rep(SMALL,n-1),  # regular
+        -1+SMALL,        # fillup
+        fcv)             # further contraint vector
     
     out <- constrOptim(
         theta = startp,
@@ -382,7 +391,8 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
         ui    = UI,
         ci    = CI,
         ...)
-        
+
+    out$value <- -out$value # correct for -ve sign in objective()
     
     if(give){
       return(out)
@@ -543,7 +553,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
         powers <- alpha-1
     }
     
-    if(is.na(pnames) & !is.null(names(powers))){
+    if(isTRUE(is.na(pnames)) & !is.null(names(powers))){
         pnames <- names(powers)
     }
     hyper2(as.list(seq_along(powers)),d=powers,pnames=pnames)
@@ -584,3 +594,41 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 `all_pnames` <- function(L){  # needs a list
   L %>% lapply(function(x){x %>% pnames %>% as.character}) %>% c(recursive=TRUE) %>% unique %>% sort
 }
+
+`saffy` <- function(M){
+    out <- hyper2(pnames=colnames(M))
+    for(i in seq_len(nrow(M))){
+        onerow <- M[i,]
+        choices <- names(onerow[!is.na(onerow)])
+        out[choices] %<>%  `-`(sum(onerow,na.rm=TRUE))
+    }
+    for(j in seq_len(ncol(M))){
+        out[colnames(M)[j]] %<>% `+`(sum(M[,j],na.rm=TRUE))
+    }
+    return(out)
+}
+
+`volley` <- function(M){
+    out <- hyper2()
+    if(!is.null(colnames(M))){pnames(out) <- colnames(M)}
+    for(i in seq_len(nrow(M))){
+        onerow <- M[i,]
+        winning_side <- onerow==1
+        losing_side  <- onerow==0
+        playing <- !is.na(onerow)
+        if(any(playing) & any(winning_side) & any(losing_side)){
+          out[which(winning_side)] %<>% `+`(1)
+          out[which(playing)] %<>% `-`(1)
+        }
+    }
+    return(out)
+}
+
+`inc` <- function(H,val=1){ H %<>% `+`(val)}   # increment
+`dec` <- function(H,val=1){ H %<>% `-`(val)}   # decrement
+
+`trial` <- function(H,winners,players,val=1){
+  H[winners] %<>% `+`(val)
+  H[players] %<>% `-`(val)
+  return(H)
+}   

@@ -69,7 +69,7 @@ maxp(chess)
 ###################################################
 ### code chunk number 11: 2016_olympics_heat1_setup
 ###################################################
-data("rowing")
+data("rowing")   # see rowing.Rd
 H <- hyper2(pnames=allrowers)
 H
 
@@ -85,7 +85,7 @@ H
 ###################################################
 ### code chunk number 13: rowers
 ###################################################
-head(sculls2016)
+head(sculls2016)   # see rowing.Rd
 
 
 ###################################################
@@ -151,18 +151,18 @@ L <- ggol(H,
 data("masterchef")
 n <- 13   # 13 players
 equal_strengths <- rep(1/n,n-1)
-like_series(equal_strengths, masterchef_series6)
+like_series(equal_strengths, masterchef_series6)  # see masterchef.Rd
 
 
 ###################################################
 ### code chunk number 21: unconstrained_optimization (eval = FALSE)
 ###################################################
-## UI = rbind(diag(n-1),-1)  # p_i >= 0
-## CI = c(rep(0,n-1),-1)     # p_1+...+p_{n-1} <= 1
+## UI <- rbind(diag(n-1),-1)  # p_i >= 0
+## CI <- c(rep(0,n-1),-1)     # p_1+...+p_{n-1} <= 1
 ## 
-## constrOptim(
-##     theta = equal_strengths,
-##     f = function(p){-like_series(p,L)}, 
+## constrOptim(  # maxp() does not work for masterchef_series6
+##     theta = equal_strengths,  # starting point for optimization
+##     f = function(p){-like_series(p,masterchef_series6)}, # see masterchef.Rd
 ##     ui=UI, ci=CI,
 ##     grad=NULL)
 
@@ -189,18 +189,18 @@ pchisq(2*(78.7-66.2),df=12,lower.tail=FALSE)
 ###################################################
 ### code chunk number 25: brent.gt.laura (eval = FALSE)
 ###################################################
-## UI = rbind(UI,c(0,0,1,0,0,0,0,0,-1,0,0,0,0))  # Brent >= Laura
+## UI <- rbind(UI,c(0,0,1,0,0,0,0,0,-1,0,0,0,0))  # Brent >= Laura
 ## CI <- c(CI,0)
 ## ans2 <-
-## constrOptim(
+## constrOptim(  # maxp() does not work for masterchef_series6
 ##     theta = equal_strengths,
-##     f = function(p){-like_series(p,L)},  # 'L' created by ggol() above
+##     f = function(p){-like_series(p,masterchef_series6)},  # see masterchef.Rd
 ##     grad=NULL,
 ##     ui = UI, ci=CI)
 
 
 ###################################################
-### code chunk number 26: hyper2.Rnw:764-765
+### code chunk number 26: hyper2.Rnw:765-766
 ###################################################
 like_series(indep(pmax_masterchef6_constrained), masterchef_series6)
 

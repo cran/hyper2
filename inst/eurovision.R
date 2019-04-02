@@ -1,15 +1,12 @@
-## This file creates hyper2 object 'eurovision2009'.
+## This file creates hyper2 object 'euro2009'.
 
-## The dataset is copied from "Eurovision Song Contest 2009," Wikipedia,
-## accessed May 13, 2018.
-
+## The dataset wiki_matrix, defined below, is copied from "Eurovision
+## Song Contest 2009," Wikipedia, accessed May 13, 2018.
 
 ## More documentation is given in euro.Rd [type help(euro2009) at the
 ## R prompt]
 
- library("hyper2")
-## might be needed.
-
+library("hyper2")
 
 abbreviated <- TRUE
 ## change to FALSE to use full country names rather than two-letter abbreviations.
@@ -38,6 +35,10 @@ wiki_matrix <- matrix(c(
     12, 08, 05, 05, 08, 06, 00, 08, 12, 03, 07, 03, 10, 05, 08, 07, 07, NA, 08, 03) # BA
 , nrow=18,byrow=TRUE)
 
+## Each row corresponds to a competitor and each column to a
+## judge. Note that the matrix is not square: Germany and the UK were
+## judges but not competitors.
+
 ## I have removed the first column which is the total of the points,
 ## replaced self-voting entries with NA, and replaced blanks with
 ## '00'; every entry is padded to two digits.
@@ -45,7 +46,7 @@ wiki_matrix <- matrix(c(
 
 points <- c(12,10,8,7,6,5,4,3,2,1)
 ## Variable 'points' gives the number of points awarded, under
-## Eurovision rules, to voters' first, econd, third, etc choice.
+## Eurovision rules, to voters' first, second, third, etc choice.
 ## Points for any competitor are added and the winner is the
 ## competitor with the most points.  However, in this model, the
 ## numerical values themselves do not affect the likelihood function;
@@ -79,28 +80,26 @@ if(abbreviated){
 
 competitors <- jj[1:18]
 colnames(preference) <- jj      # voters; 20 countries (18 + DE + UK)
-
 rownames(preference) <- competitors  
-# The competitors were the first
-                                     # 18 countries (the last two
-                                     # countries, Germany and the UK,
-                                     # voted but did not compete)
 
+rownames(wiki_matrix) <- jj[1:18]
+colnames(wiki_matrix) <- jj
 
-
+## The competitors were the first 18 countries (the last two
+## countries, Germany and the UK, voted but did not compete)
 
 ## We need the voters' choices to be the *rows* for consistency with
 ## the rest of the package (and, for that matter, the aylmer package
 ## and indeed the emulator package), so we take the transpose:
 preference <- t(preference)
 
-
 ## Now, take the first row of 'preference'.  This represents the votes
 ## cast BY (sic) Montenegro ("ME").  Their favourite was [last column]
 ## Bosnia & Herzegovina who they gave rank 1 to.  Their second
 ## favourite was Macedonia, their third was Turkey, and so on.  They
 ## were not allowed to vote for themselves, which is why the first
-## column is NA.  So the order was: bh, mc, tu,ic,ro,is, ar,fi,br,ma
+## column is NA.  So the order was:
+## bh, mc, tu, ic, ro, is, ar, fi, br, ma
 
 ## Define an empty hyper2 object:
 euro2009 <- hyper2(d=18)
@@ -115,13 +114,11 @@ for(i in seq_len(nrow(preference))){   # cycle through the rows; each row is a v
                                         # eligible players has +1
                                         # power on the numerator
         
-
-        euro2009[eligible] <- euro2009[eligible] - 1
-                                        # denominator of all eligible players; power -1
+        euro2009[eligible] %<>% dec()   # denominator of all eligible players
 
         d[d==1] <- -1  # once you've won, you are ineligible to be chosen again
 
-        d[d>0] %<>% "-"(1)  # everyone moves down the list, so who
+        d[d>0] %<>% dec()  # everyone moves down the list, so who
                             # *was* second choice becomes first
                             # choice, who *was* third choice becomes
                             # second, and so on.
@@ -132,3 +129,7 @@ for(i in seq_len(nrow(preference))){   # cycle through the rows; each row is a v
 
 ## syntatic sugar:
 pnames(euro2009) <- competitors
+
+## plot points vs strength:
+plot(rowSums(wiki_matrix,na.rm=TRUE),maxp(euro2009),
+     pch=16,xlab="points scored",ylab="MLE strength")

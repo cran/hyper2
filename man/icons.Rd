@@ -1,17 +1,22 @@
 \name{icons}
 \alias{icons}
+\alias{icons_matrix}
 \alias{oneill}
 \docType{data}
 \title{Dataset on climate change due to O'Neill}
 \description{
-  A matrix of nine rows and six columns, one column for each of six
+  Object \code{icons_matrix} is 
+  a matrix of nine rows and six columns, one column for each of six
   icons relevant to climate change.  The matrix entries show the number
   of respondents who indicated which icon they found most concerning.
   The nine rows show different classes of respondents who were exposed
   to different subsets (of size four) of the six icons.
 
   The columns correspond to the different stimulus icons used, detailed
-  below. 
+  below.
+
+  Object \code{icons} is the corresponding likelihood function, which
+  can be created with \code{saffy(icons_matrix)}.
 }
 \usage{data(oneill)}
 \details{
@@ -43,10 +48,14 @@
       Climate Change and Individual Behaviour: Closing the Gap}. 
     In  \emph{Avoiding Dangerous Climate Change} (conference
     proceedings), UK Met Office, Exeter, 1-3 February
+    \item R. K. S. Hankin 20101. \dQuote{A generalization of the Dirichlet
+      distribution}.   \emph{Journal of Statistical software}, 33:11
   }
 }
 \examples{
 data(oneill)
 maxp(icons)
+
+icons == saffy(icons_matrix)   # should be TRUE
 }
 \keyword{datasets}
