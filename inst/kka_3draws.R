@@ -2,7 +2,8 @@
 ## file karpov_kasparov_anand.R for details on the origin of the data.
 
 ## This is a more sophisticated version (with more parameters) than
-## inst/karpov_kasparov.R
+## inst/karpov_kasparov.R: it allows for each player to have a
+## distinct draw monster.
 
 ## This file creates likelihood function 'H' 
 
@@ -19,18 +20,21 @@ draw1 <- c("Karpov_draw","Kasparov_draw")
 
 H %<>% trial(c("Karpov"  ,"white"), karpov_vs_kasparov, karpov_plays_white_beats_kasparov)
 H %<>% trial(c("Kasparov","white"), karpov_vs_kasparov, kasparov_plays_white_beats_karpov)
-H %<>% trial(c("Karpov"  )        , karpov_vs_kasparov, karpov_plays_black_beats_kasparov)
-H %<>% trial(c("Kasparov")        , karpov_vs_kasparov, kasparov_plays_black_beats_karpov)
-H %<>% trial(draw1                , karpov_vs_kasparov, karpov_draws_kasparov            )
+H %<>% trial(c("Karpov"  )        , karpov_vs_kasparov, kasparov_plays_white_losesto_karpov)
+H %<>% trial(c("Kasparov")        , karpov_vs_kasparov, karpov_plays_white_losesto_kasparov)
+H %<>% trial(draw1                , karpov_vs_kasparov, karpov_plays_white_draws_kasparov)
+H %<>% trial(draw1                , karpov_vs_kasparov, kasparov_plays_white_draws_karpov)
 
 ## Kasparov vs Anand
 kasparov_vs_anand <- c("Kasparov","Anand","Kasparov_draw","Anand_draw","white")
 draw2 <- c("Kasparov_draw","Anand_draw")
 H %<>% trial(c("Kasparov","white"), kasparov_vs_anand, kasparov_plays_white_beats_anand)
 H %<>% trial(c("Anand"   ,"white"), kasparov_vs_anand, anand_plays_white_beats_kasparov)
-H %<>% trial(c("Kasparov"  )      , kasparov_vs_anand, kasparov_plays_black_beats_anand)
-H %<>% trial(c("Anand")           , kasparov_vs_anand, anand_plays_black_beats_kasparov)
-H %<>% trial(draw2                , kasparov_vs_anand, kasparov_draws_anand            )
+H %<>% trial(c("Kasparov"  )      , kasparov_vs_anand, anand_plays_white_losesto_kasparov)
+H %<>% trial(c("Anand")           , kasparov_vs_anand, kasparov_plays_white_losesto_anand)
+H %<>% trial(draw2                , kasparov_vs_anand, kasparov_plays_white_draws_anand)
+H %<>% trial(draw2                , kasparov_vs_anand, anand_plays_white_draws_kasparov)
+
 
 ## Karpov vs Anand
 karpov_vs_anand <- c("Karpov","Anand","Karpov_draw","Anand_draw","white")
@@ -38,9 +42,10 @@ draw3 <- c("Karpov_draw","Anand_draw")
 
 H %<>% trial(c("Karpov","white"), karpov_vs_anand, karpov_plays_white_beats_anand)
 H %<>% trial(c("Anand" ,"white"), karpov_vs_anand, anand_plays_white_beats_karpov)
-H %<>% trial(c("Karpov"        ), karpov_vs_anand, karpov_plays_black_beats_anand)
-H %<>% trial(c("Anand"         ), karpov_vs_anand, anand_plays_black_beats_karpov)
-H %<>% trial(draw3              , karpov_vs_anand, karpov_draws_anand            )
+H %<>% trial(c("Karpov"        ), karpov_vs_anand, anand_plays_white_losesto_karpov)
+H %<>% trial(c("Anand"         ), karpov_vs_anand, karpov_plays_white_losesto_anand)
+H %<>% trial(draw3              , karpov_vs_anand, karpov_plays_white_draws_anand) 
+H %<>% trial(draw3              , karpov_vs_anand, anand_plays_white_draws_karpov) 
 
 detach(results)
 
