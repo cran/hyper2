@@ -1,0 +1,190 @@
+---
+title: "formula1_allyears"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library("hyper2")
+```
+
+## Introduction
+
+*Takes a couple of hours to run with no cache*
+
+Here I analyse Formula 1 results in a range of years using
+Plackett-Luce likelihoods as implemented in the `hyper2` package.
+Files like `formula1_2017.txt` are directly copied from Wikipedia
+(with slight whitespace changes).
+
+```{r}
+years <- 2001:2015
+```
+
+
+
+```{r,label=f1yearsseparate,cache=TRUE}
+f <- function(M){M[,-ncol(M)]} # removes 'points' column
+o <- function(k){ordertable2supp(f(read.table(k)))}
+filenamemaker <- function(year){paste("formula1_",year,".txt", sep="")}
+F1_list <- list()
+for(year in years){
+	filename <- filenamemaker(year)
+	jj <- paste("y",year,sep="")
+	F1_list[[jj]] <- o(filename)
+}
+```
+
+```{r,label=combineallyears,cache=TRUE}
+F1_total <- hyper2()
+for(i in F1_list){F1_total <- F1_total + i}
+```
+
+```{r,calculatemaxlikelhood,cache=TRUE}
+m <- maxp(F1_total)
+pie(m)
+dotchart(m,pch=16,main=paste("Formula 1, years ",min(years)," to ",max(years)))
+```
+
+```{r,workwithM}
+M <- matrix(NA,nrow=length(pnames(F1_total)),ncol=length(years))
+rownames(M) <- pnames(F1_total)
+colnames(M) <- paste("y",years,sep="")
+
+for(i in seq_len(nrow(M))){
+    for(j in seq_len(ncol(M))){
+        if(rownames(M)[i] %in% pnames(F1_list[[j]])){M[i,j] <- 1}
+    }
+}
+jj <- order(rowSums(M,na.rm=T),decreasing=T)
+M <- M[jj,]
+
+image(x=years,y=seq_along(pnames(F1_total)),t(M))
+```
+
+
+```{r}
+howmanyraces <- sort(rowSums(M,na.rm=TRUE),decreasing=TRUE)
+plot(howmanyraces)
+```
+
+```{r}
+select <- function(F1tab,minraces=5){
+	wanted <- rownames(M)[howmanyraces >= minraces]
+	ordertable2supp(F1tab[rownames(F1tab) %in% wanted,])
+}
+```
+
+
+```{r,definefreqrace}
+freqracers <- function(minraces){ # minimum number of seasons
+	out <- hyper2()
+	for(year in years){
+		out <- out + select(f(read.table(filenamemaker(year),minraces)))
+	}	
+	return(out)
+}
+
+comp <- function(m,mr){
+	par(pty="s")
+#	plot(m,mr,asp=1,xlim=c(0,0.2),ylim=c(0,0.2))
+	plot(m,mr,asp=1)
+	abline(0,1)
+}
+```
+
+
+# All drivers
+
+```{r,freqtop1,cache=TRUE}
+F1_top1 <- freqracers(1)
+m1 <- maxp(F1_top1)
+pnames(F1_top1) <- rev(pnames(F1_top1))
+m1r <- rev(maxp(F1_top1)) # reverse of MLE with names reversed
+```
+
+
+```{r}
+pie(m1)
+comp(m1,m1r)
+```
+
+# Drivers with >= 2 races
+
+```{r,freqtop2,cache=TRUE}
+F1_top2 <- freqracers(2)
+m2 <- maxp(F1_top2)
+pnames(F1_top2) <- rev(pnames(F1_top2))
+m2r <- rev(maxp(F1_top2)) # reverse of MLE with names reversed
+```
+
+
+```{r}
+pie(m2)
+comp(m2,m2r)
+```
+
+# Drivers with >= 3 races
+
+```{r,freqtop3,cache=TRUE}
+F1_top3 <- freqracers(3)
+m3 <- maxp(F1_top3)
+pnames(F1_top3) <- rev(pnames(F1_top3))
+m3r <- rev(maxp(F1_top3)) # reverse of MLE with names reversed
+```
+
+
+```{r}
+pie(m3)
+comp(m3,m3r)
+```
+
+# Drivers with >= 4 races
+
+```{r,freqtop4,cache=TRUE}
+F1_top4 <- freqracers(4)
+m4 <- maxp(F1_top4)
+pnames(F1_top4) <- rev(pnames(F1_top4))
+m4r <- rev(maxp(F1_top4)) # reverse of MLE with names reversed
+```
+
+
+```{r}
+pie(m4)
+comp(m4,m4r)
+```
+
+
+# Drivers with >= 5 races
+
+```{r,freqtop5,cache=TRUE}
+F1_top5 <- freqracers(5)
+m5 <- maxp(F1_top5)
+pnames(F1_top5) <- rev(pnames(F1_top5))
+m5r <- rev(maxp(F1_top5)) # reverse of MLE with names reversed
+```
+
+
+```{r}
+pie(m5)
+comp(m5,m5r)
+```
+
+
+# Drivers with >= 6 races
+
+```{r,freqtop6,cache=TRUE}
+F1_top6 <- freqracers(6)
+m6 <- maxp(F1_top6)
+pnames(F1_top6) <- rev(pnames(F1_top6))
+m6r <- rev(maxp(F1_top6)) # reverse of MLE with names reversed
+```
+
+
+```{r}
+pie(m6)
+comp(m6,m6r)
+```

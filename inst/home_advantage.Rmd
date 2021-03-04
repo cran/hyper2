@@ -16,9 +16,7 @@ First load the package:
 library(hyper2)
 ```
 
-
 Now generate the dataset:
-
 
 ```{r}
 home_games_won <- matrix(c(
@@ -36,23 +34,21 @@ away_games_won <- matrix(c(
     nrow=4,ncol=4,byrow=TRUE)
 
 teams <- LETTERS[1:4]
-rownames(home_games_won) <- teams
-colnames(home_games_won) <- teams
-rownames(away_games_won) <- teams
-colnames(away_games_won) <- teams
+dimnames(home_games_won) <- list("@home" = teams,"@away"=teams)
+dimnames(away_games_won) <- list("@home" = teams,"@away"=teams)
 
 home_games_won
 away_games_won
 ```
 
-Thus ```home_games_won[1,2] == 16``` means A played at home against B
-and won 16 times; ```home_games_won[2,1] == 19``` means B played at
-home against A and won 19 times.  Also, ```away_games_won[1,2] == 5```
-means A played away against B and won 5 times, and
-```away_games_won[2,1] == 2``` means B played away against A and won 2
-times.  Alternatively, A played B 16+19+5+2=45 times; A played at home
-16+2=18 times and won 16 times and lost 2 times; and B played at home
-19+5=24 times and won 19 times and lost 5 times.
+Thus `home_games_won[1,2] == 16` means A played at home against B and
+won 16 times; `home_games_won[2,1] == 19` means B played at home
+against A and won 19 times.  Also, `away_games_won[1,2] == 5` means A
+played away against B and won 5 times, and `away_games_won[2,1] == 2`
+means B played away against A and won 2 times.  Alternatively, A
+played B 16+19+5+2=45 times; A played at home 16+2=18 times and won 16
+times and lost 2 times; and B played at home 19+5=24 times and won 19
+times and lost 5 times.
 
 We will create a hyper2 object with the teams and home ground advantage term:
 
@@ -107,26 +103,26 @@ dotchart(maxp(H))
 ```
   
 Now a likelihood ratio for the hypothesis that home strength (or home
-advantage) is zero.  First define a function ```f()``` that maximises
-the likelihood subject to the home strength being *less than* its
+advantage) is zero.  First define a function `f()` that maximises the
+likelihood subject to the home strength being *less than* its
 argument:
 
 
 ```{r}
-small <- 1e-4
 f <- function(home){
-  maxp(H,startp=rep((1-small)/4,4),give=TRUE,fcm=t(rep(1,4)),fcv=1-home)$value
+	small <- 1e-3
+	maxp(H,startp=rep((1-small)/4,4),give=TRUE,fcm=t(rep(1,4)),fcv=1-home)$value
 }
 ```
 
-See how the ```fcm``` and ```fcv``` constraints make the sum of
-a,b,c,d, greater than ```1-home```.  Thus 'home' [which is the fillup
-value, $p_\mathrm<{home}=1-(p_A+p_B+p_C+p_D)$] is constrained to be
-less than argument ```home```.  Using this function, the likelihood
-ratio test is straightforward:
+See how the `fcm` and `fcv` constraints make the sum of a,b,c,d,
+greater than `1-home`.  Thus 'home' [which is the fillup value,
+$p_\mathrm{home}=1-(p_A+p_B+p_C+p_D)$] is constrained to be less than
+argument `home`.  Using this function, the likelihood ratio test is
+straightforward:
 
 ```{r}
-Lambda <- -2*(f(2e-4)-maxp(H,give=TRUE)$value)
+Lambda <- -2*(f(0.01)-maxp(H,give=TRUE)$value)
 Lambda
 ```
 
@@ -138,7 +134,8 @@ value:
 
 ```{r}
 g <- function(home){
-  maxp(H,startp=rep(small/4,4),give=TRUE,fcm=-t(rep(1,4)),fcv=home-1)$value
+	small <- 1e-3
+	maxp(H,startp=rep(small/4,4),give=TRUE,fcm=-t(rep(1,4)),fcv=home-1)$value
 }
 ```
 

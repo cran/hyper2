@@ -23,7 +23,7 @@ B(chess)
 ###################################################
 ### code chunk number 4: integration.Rnw:137-139
 ###################################################
-f <- function(p){loglik(chess,indep(p)) > loglik(chess,c(1,1)/3)}
+f <- function(p){loglik(indep(p),chess) > loglik(c(1,1)/3,chess)}
 probability(chess, disallowed=f,tol=0.01)
 
 
@@ -35,17 +35,18 @@ probability(chess, disallowed=T.lt.A,tol=0.001)
 
 
 ###################################################
-### code chunk number 6: integration.Rnw:193-195
+### code chunk number 6: integration.Rnw:192-195
 ###################################################
+x <- c(a=1,b=2,c=3,d=4)  # needs a named vector
+B(dirichlet(x))
 prod(gamma(1:4))/gamma(sum(1:4))
-B(dirichlet(alpha=1:4))
 
 
 ###################################################
 ### code chunk number 7: integration.Rnw:202-205
 ###################################################
 f <- function(p){p[1]<p[2]}
-H <- dirichlet(alpha=rep(2,4))
+H <- dirichlet(alpha=c(a=3,b=3,c=3,d=3))
 probability(H,f,tol=0.1)
 
 
@@ -86,10 +87,9 @@ pchisq(2*2.608,df=1,lower.tail=FALSE)
 
 
 ###################################################
-### code chunk number 13: integration.Rnw:341-352
+### code chunk number 13: integration.Rnw:341-351
 ###################################################
-H <- hyper2(d=4)
-pnames(H) <- c("t00","t10", "t01", "t11")
+H <- hyper2()
 H["t00"] <- 18
 H["t10"] <- 01
 H["t01"] <- 05
@@ -102,7 +102,7 @@ H
 
 
 ###################################################
-### code chunk number 14: integration.Rnw:360-365
+### code chunk number 14: integration.Rnw:359-364
 ###################################################
 free <- maxp(H,give=TRUE)
 m <- fillup(free$par)
@@ -112,26 +112,11 @@ free$value
 
 
 ###################################################
-### code chunk number 15: integration.Rnw:370-374
+### code chunk number 15: integration.Rnw:369-373
 ###################################################
-obj <- function(p){-loglik(H,p)}   # objective func
+obj <- function(p){-loglik(p,H)}   # objective func
 gr  <- function(p){-gradient(H,p)} # gradient, needed for speed
 UI <- rbind(diag(3),-1)           # UI and CI specify constraints
 CI <- c(rep(0,3),-1)              # p_i >= 0 and sum p_i <= 1
-
-
-###################################################
-### code chunk number 16: integration.Rnw:381-385
-###################################################
-ml_HA <- constrOptim(theta=c(0.1,0.2,0.1), f = obj,grad=gr,
-ui = rbind(UI,c(0,1,-1)),   # p2 > p3
-ci = c(CI,0))
-ml_HA$value
-
-
-###################################################
-### code chunk number 17: integration.Rnw:391-392
-###################################################
-ml_HA$value - free$value
 
 

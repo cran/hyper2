@@ -2,6 +2,8 @@
 \alias{Extract.hyper2}
 \alias{extract}
 \alias{extractor}
+\alias{assign_lowlevel}
+\alias{overwrite_lowlevel}
 \alias{[.hyper2}
 \alias{[<-.hyper2}
 \title{
@@ -13,6 +15,9 @@ Extract or replace parts of a hyper2 object
 \usage{
 \method{[}{hyper2}(x, \dots)
 \method{[}{hyper2}(x, index, \dots) <- value
+assign_lowlevel(x,index,value)
+overwrite_lowlevel(x,value)
+
 }
 \arguments{
   \item{x}{An object of class \code{hyper2}}
@@ -45,7 +50,12 @@ Extract or replace parts of a hyper2 object
  Altering (incrementing or decrementing) the power of a single bracket
  is possible using idiom like \code{H[x] <- H[x] + 1}; this is
  documented at \code{Ops.hyper2}, specifically
- \code{hyper2_sum_numeric()}.
+ \code{hyper2_sum_numeric()} and a discussion is given at
+ \code{increment.Rd}.
+ 
+ Functions \code{assign_lowlevel()} and \code{overwrite_lowlevel()} are
+ low-level helper functions and not really intended for the end-user.
+
 }
 
 \value{
@@ -67,19 +77,23 @@ Also see function \code{hyper2_sum_numeric()}.
 \examples{
 data(chess)
 
-chess[1]
-chess[c(1,2)]
-chess[list(1,1:2)]
-chess[1] <- 5
+chess["Topalov"]
+chess[c("Topalov","Anand")]
+chess[c("Anand","Topalov")]
 
-a <- hyper2(pnames=letters[1:8])
-a[sapply(seq_len(8),seq_len)] <- 1
-a
+# Topalov plays Anand and wins:
 
-b <- a
-b[1] <- 1000
-b[2] <- 2000
-b[] <- a      # b[1] overwritten; b[2] preserved
+chess["Topalov"] <- chess["Topalov"]+1 
+chess[c("Topalov","Anand")] <- chess[c("Topalov","Anand")]-1
 
+
+# Topalov plays *Kasparov* and wins:
+chess["Topalov"] \%<>\% inc
+chess[c("Topalov","Kasparov")] \%<>\% dec
+
+
+# overwriting idiom:
+H <- hyper2(list("Topalov","X"),6)
+chess[] <- H
 
 }

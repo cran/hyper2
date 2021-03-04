@@ -1,5 +1,6 @@
 \name{loglik}
 \alias{loglik}
+\alias{loglik_single}
 \alias{like_single_list}
 \alias{like_series}
 \title{
@@ -9,7 +10,8 @@ Log likelihood functions
 Returns a log-likelihood for a given hyper2 object at a specific point
 }
 \usage{
-loglik(H, p, log = TRUE)
+loglik(p, H, log = TRUE)
+loglik_single(p,H,log=TRUE)
 like_single_list(p,Lsub)
 like_series(p,L,log=TRUE)
 
@@ -37,8 +39,11 @@ where \eqn{p_1+\cdots+p_n=1}{p_1+...+p_n=1}.
 
 If \code{p} is a matrix, the rows are interpreted as probability points.
 
+Function \code{loglik_single()} is a helper function that takes a single
+point in probability space.
+
 Functions \code{like_single_list()} and \code{like_series()} are
-intended for use with \code{ggol()}.
+intended for use with \code{ggrl()}.
 
 
 }
@@ -48,26 +53,29 @@ intended for use with \code{ggol()}.
   Log-likelihood (also known as \emph{support}) is defined up to an
   arbitrary additive constant.
 
+  Empty brackets are interpreted consistently: that is, zero whatever
+  the probability vector (although the print method is not perfect).
+
   
   }
 \author{Robin K. S. Hankin}
 \seealso{\code{\link{maxp}}}
 \examples{
 data(chess)
-loglik(chess,c(1/3,1/3))
+loglik(c(1/3,1/3),chess)
 
 data(masterchef)
 
-a1 <- rep(1/13,12)                          # equal strengths
-a2 <- indep(pmax_masterchef6)               # MLE
+a1 <- rep(1/13,12)                  # equal strengths
+a2 <- indep(masterchef_maxp)        # MLE
 
-like_series(a1,masterchef_series6)
-like_series(a2,masterchef_series6)
+like_series(a1,masterchef)
+like_series(a2,masterchef)
 
 
 W <- hyper2(pnames=letters[1:6])
-W1 <- ggol(W, 'a', letters[2:5],'f')              # 24-element list
-W2 <- ggol(W, c('a','b'), c('c','d'),c('e','f'))  # 2^3=8 element list
+W1 <- ggrl(W, 'a', letters[2:5],'f')              # 24-element list
+W2 <- ggrl(W, c('a','b'), c('c','d'),c('e','f'))  # 2^3=8 element list
 
 like_single_list(rep(1/6,5),W1)      # information from first observation
 like_series(rep(1/6,5),list(W1,W2))  # information from both observations

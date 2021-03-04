@@ -1,0 +1,80 @@
+---
+title: "Grand Prix motorcycle racing"
+output: bookdown::html_document2
+---
+
+```{r setup, include=FALSE}
+set.seed(0)
+options(width = 120)
+knitr::opts_chunk$set(echo = TRUE)
+library("hyper2")
+library("magrittr")
+```
+
+## The 2019 FIM motoGP world championship
+
+Here I analyse a series of Grand Prix motorcycling race results using
+the `hyper2` package which implements the Plackett-Luce likelihood
+function.  Consider the following dataset, taken from Wikipedia:
+
+```{r cars}
+moto_table <- read.table("motoGP_2019.txt")
+head(moto_table)
+```
+
+Each row is a driver (rider?) and each column (after the first) a
+venue.  Taking the first row we see that Marquez came second in Qatar
+(QAT), first in Argentina, retired in Austin, and so on.  In the first
+column, we see the result from Qatar (QAT) in which Marquez came
+second, Dovizioso first, Vinales third, and so on.  Notation used also
+includes six different classes of no-score such as "Ret" for retired,
+"WD" for withdrawn, and so on.  I now use package function
+`ordertable2supp()`, that translates data of this type into a
+log-likelihood.  In the package, object `moto` is the corresponding
+Plackett-Luce likelihood function; we drop the final column which is
+the points scored by each rider.
+
+```{r,showmotolikelihoodhead}
+moto <- ordertable2supp(moto_table[,-ncol(moto_table)])
+head(moto)
+```
+
+Above, we see a small part of the Placket-Luce likelihood function for
+the 2019 results.  We can find the maximum likelihood estimator by
+using the `maxp()` function:
+
+```{r,maxpcalculator,cache=TRUE}
+moto_maxp <- maxp(moto)
+moto_maxp
+```
+
+```{r dotchartmoto, echo=TRUE,fig.cap="Dot chart of riders' strengths"}
+dotchart(moto_maxp,pch=16)
+```
+
+```{r piechartmoto,echo=TRUE,fig.cap="Pie chart of riders' strengths"}
+pie(moto_maxp)
+```
+
+In figures \@ref(fig:dotchartmoto) and \@ref(fig:piechartmoto), note
+the dominance of Marquez.  It is sometimes preferable to plot the
+estimated strengths on a log scale:
+
+```{r dotchartlogmoto, echo=TRUE,fig.cap="Dot chart of riders' strengths, log scale"}
+dotchart(log10(moto_maxp),pch=16)
+```
+
+
+(in figure \@ref(fig:dotchartlogmoto
+) observe that the bottom-ranked
+player, Lecuona, has a ML strength of zero but the estimate is
+slightly positive for numerical reasons).
+
+### Package dataset {-}
+
+Following lines create `moto.rda`, residing in the `data/` directory
+of the package.
+
+```{r,label=savemotodataset}
+save(moto,moto_table,moto_maxp,file="moto.rda")
+```

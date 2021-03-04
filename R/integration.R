@@ -29,9 +29,9 @@ function(e){
   prod(cumprod(1-e))*e1^n
 }
 
-`dhyper2` <- function(P,H,...){
-  P <- rbind(P)
-  loglik(H,P,log=FALSE)/B(H,...)
+`dhyper2` <- function(ip,H,...){
+  ip <- rbind(ip)
+  loglik(ip,H,log=FALSE)/B(H,...)
 }
 
 `dhyper2_e` <-  # analogous to dhyperdirichlet_e()
@@ -40,7 +40,7 @@ function(e, H, include.Jacobian=TRUE){
   e <- c(1,e)
   p <- e_to_p(e)
 
-  out <- loglik(H,indep(p),log=FALSE)
+  out <- loglik(indep(p),H,log=FALSE)
   if(include.Jacobian){out <- Jacobian(e)*out}
   return(out)
 }
@@ -51,6 +51,7 @@ function(e, H, include.Jacobian=TRUE){
   f <- function(i){
     jj <- rep(0,size(H))
     jj[i] <- 1
+    names(jj) <- pnames(H)
     return(mgf(H,jj, ...))
   }
 

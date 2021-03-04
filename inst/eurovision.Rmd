@@ -1,0 +1,156 @@
+---
+title: "Eurovision Song Contest: semifinal 1, 2009"
+output: bookdown::html_document2
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("hyper2")
+library("magrittr")
+options("digits" = 5)
+abbreviated <- TRUE  # change to FALSE for full names
+```
+
+The file `eurovision.txt`, used below, is copied from "Eurovision Song
+Contest 2009," Wikipedia, accessed May 13, 2018.  It refers to
+semi-final 1.  More documentation is given in `eurovision.Rd` [type
+`help(euro2009)` at the `R` prompt].
+
+First we specify the matrix as appearing in the Wikipedia page:
+
+```{r, specifymatrix}
+eurovision_table <- as.matrix(read.table("eurovision.txt"))
+eurovision_table
+```
+
+Each row corresponds to a contestant and each column to a judge.  Note
+that the matrix is not square: the last two columns correspond to
+Germany and the UK, who were judges but not competitors.  I have
+removed the first column from the Wikipedia table (which gave the
+total of the points), replaced self-voting entries with `NA`, and
+replaced blanks with `0`.  Thus the first row corresponds to votes
+cast for `ME`, Montenegro.  We see that `BY` (Belarus) awarded them
+three points, `AM` (Armenia) five points, and so on.  The first column
+corresponds to the points awarded by Monetenegro.  We see that they
+placed gave Belarus (`BY`) two points, Armenia (`AM`) four points, and
+so on.  Their favourite was Bosnia and Herzegovina (`BA`) to whom they
+gave twelve points.  The points system used was:
+
+```{r,pointsforplaces}
+points <- c(12,10,8,7,6,5,4,3,2,1)
+```
+
+Variable `points` gives the number of points awarded, under Eurovision
+rules, to voters' first, second, third, etc choice.  Points for any
+competitor are added and the winner is the competitor with the most
+points.  However, in the `hyper2` model, the numerical values
+themselves do not affect the likelihood function; only the order of
+the voters' preferences matters.  The following R idiom translates
+`wiki_matrix` into a form suitable for analysis with `hyper2`:
+
+```{r,prefsetter}
+preference <- eurovision_table*0  
+for(i in seq_along(points)){ preference[eurovision_table == points[i]] <- i }
+
+countries <- data.frame(
+    fullname =
+        c("Montenegro", "Czech rep", "Belgium", "Belarus", "Sweden",
+          "Armenia", "Andorra", "Switzerland", "Turkey", "Israel",
+          "Bulgaria", "Iceland", "Macedonia", "Romania", "Finland",
+          "Portugal", "Malta", "Bosnia Herz", "Germany", "UK"),
+    abbreviation = c("ME","CZ","BE", "BY", "SW", "AM", "AD", "CH",
+                     "TR", "IL", "BG", "IS", "MK", "RO", "FI", "PT",
+                     "MT", "BA", "DE", "UK")
+)
+
+if(abbreviated){ 
+    jj <- countries$abbreviation
+} else { 
+    jj <- countries$fullname
+}
+
+competitors <- as.character(jj[1:18])
+colnames(preference) <- jj      # voters; 20 countries (18 + DE + UK)
+rownames(preference) <- competitors  
+
+rownames(eurovision_table) <- jj[1:18]
+colnames(eurovision_table) <- jj
+```
+
+In the above, matrix `preference` records voters' first, second,
+third, etc choice.  A zero entry means no points (nul punkte!) and
+`NA` means that voter was forbidden from voting for that player
+(countries cannot vote for themselves).  The competitors were the
+first 18 countries (the last two countries,
+Germany and the UK, voted but did not compete).  
+
+```{r}
+preference
+```
+Now, take the first column of `preference`.  This represents the order
+of preferences of Montenegro (`ME`).  Their favourite was [last row]
+Bosnia & Herzegovina (`BA`), who they gave rank 1 to (that is, 12
+points).  Their second favourite was Macedonia (`MK`), their third was
+Turkey (`TR`), and so on.  They were not allowed to vote for themselves,
+which is why the first row is `NA`.  So the order was: `BA` (first),
+`MK` (second) , `TR` (third), `IS` (fourth), `RO` (fifth), `IL`
+(sixth), `AM` (seventh), `FI` (eigthth), `BY` (ninth), `MT` (tenth).
+The other countries (`CZ`, `BE`, `SW`, `CH`, `BG`, `PT`) came joint
+last and did not receive any points from Montenegro.  Note the final
+two rows corresponding to votes cast by Germany and the UK, who did
+not compete and therefore cast votes for all competitors.
+
+We need to convert matrix `preference` into a likelihood function,
+here `eurovision`:
+ 
+```{r,morestuff}
+eurovision <- hyper2()
+
+for(i in seq_len(ncol(preference))){   # cycle through the rows; each row is a voter
+    d <- preference[,i,drop=TRUE]
+	eurovision <- eurovision + ordervec2supp(d[!is.na(d)])
+} # i loop closes
+```
+
+
+```{r,checknull,cache=TRUE}
+eurovision_maxp <- maxp(eurovision)
+eurovision_maxp
+```
+
+```{r,plotpieeurovision,fig.cap="Maximum likelihood strengths of competitors in the 2009 Eurovision song contest, semifinal 1"} 
+pie(eurovision_maxp)
+```
+
+Now we can check null of equal strengths:
+
+```{r,label=equalptesteurovision,cache=TRUE}
+equalp.test(eurovision)
+```
+
+Thus the difference is about 122 units of support, surely significant.
+
+
+```{r,orderplot}
+points_scored <- rowSums(eurovision_table,na.rm=TRUE)  # points
+ox <- rank(-points_scored)
+oy <- rank(-eurovision_maxp)   # m = MLE
+oyp <- ordertrans(oy,names(ox))
+
+par(pty='s') # square plot
+plot(ox,oyp,asp=1,pty='s',xlim=c(0,18),ylim=c(0,18),pch=16,
+xlab="official order",ylab="my order",main="Eurovision 2009")
+
+par(xpd=TRUE) # allow country names to appear outside plotting region
+for(i in seq_along(ox)){text(ox[i],oyp[i],names(ox)[i],pos=4,col='gray') }
+par(xpd=FALSE) # stop diagonal line from protruding beyond plotting region
+abline(0,1)
+```
+
+### Package dataset {-}
+
+Following lines create `eurovision.rda`, residing in the `data/` directory of the package.
+
+```{r,label=saveeurovisiondataset}
+save(eurovision_table,eurovision_maxp,eurovision,file="eurovision.rda")
+```

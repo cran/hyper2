@@ -3,14 +3,15 @@ useDynLib(hyper2, .registration=TRUE)
 exportPattern("^[[:alpha:]]+")
 
 importFrom(Rcpp, evalCpp)
-importFrom("stats", "constrOptim")
+importFrom("stats", "constrOptim","runif","rnorm","pchisq","rgamma")
 importFrom("utils", "head")
 importFrom("partitions","perms")
-
 importFrom("magrittr", "%>%", "%<>%")
 importFrom("cubature", "adaptIntegrate")
+importFrom("graphics", "abline", "par", "text")
 
 import(methods)
+import(mathjaxr)
 
 export(hyper2_add)
 export(size)
@@ -21,9 +22,12 @@ export(pnames)
 S3method(brackets,hyper2)
 S3method(powers,hyper2)
 S3method(pnames,hyper2)
+S3method(pnames,suplist)
 S3method("pnames<-",hyper2)
 
-S3method(print,rrank)
+S3method(print,ranktable)
+S3method(print,ranktablesummary)
+S3method(print,hyper2test)
 
 S3method("[", hyper2)
 S3method("[<-", hyper2)
@@ -33,4 +37,10 @@ S3method(sum,hyper2)
 S3method(print,hyper2)
 S3method(head,hyper2)
 S3method(length,hyper2)
+S3method(summary,ranktable)
 
+S3method(Ops,suplist)
+S3method(sum,suplist)
+
+S3method("print",summary.hyper2)
+S3method("summary",hyper2)
