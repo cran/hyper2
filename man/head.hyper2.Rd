@@ -5,16 +5,17 @@
 \usage{\method{head}{hyper2}(x, ...)}
 \arguments{
   \item{x}{Object of class \code{hyper2}}
-  \item{\dots}{Further argments, passed to \code{head()}}
+  \item{\dots}{Further arguments, passed to \code{head()}}
 }
 \details{Function is  \code{x[head(brackets(x), ...)]}}
 \value{Returns a \code{hyper2} object}
 \author{Robin K. S. Hankin}
 \examples{
 
-p <- (10:1)/55
-names(p) <- letters[1:10]
-H <- rank_likelihood(rrank(100,p))
+p <- zipf(5)
+names(p) <- letters[1:5]
+H <- rank_likelihood(rrank(20,p))
 head(H)
+
 
 }

@@ -36,7 +36,7 @@ race(v)
     row corresponding to a race (or judge).  The columns
     correspond to the finishing order; thus \code{a=M[i,j]} means that
     competitor \code{a} finished in place \code{j} in race \code{i}}
-  \item{times}{Vector specifiying the number of times each row is
+  \item{times}{Vector specifying the number of times each row is
     observed}
   \item{v}{A character vector specifying ranks.  Thus
   \code{c("b","c","a")} means that \code{b} came first, \code{c} second,
@@ -73,7 +73,7 @@ race(v)
 
   Function \code{rank_likelihood()} takes a matrix \code{M} with rows
   corresponding to a judge (or race); column names are interpreted as
-  competitor names.  qA named vector is coerced to a one-row matrix.
+  competitor names.  A named vector is coerced to a one-row matrix.
   Each row of \code{M} is an order statistic: thus \code{c(3,4,2,1)}
   means that person 3 came first, person 4 came second, person 2 came
   third and person 1 came last.  Note that in data frames like
@@ -95,12 +95,12 @@ race(v)
 \seealso{\code{\link{rrank}},\code{\link{ordertable2supp}}}
 \examples{
 
-W <- hyper2(pnames=letters[1:7])
-W1 <- ggrl(W, 'a', letters[2:6],'g')  # 24-element list
-W2 <- ggrl(W, 'b', letters[3:7],'a')  # 24-element list
+W <- hyper2(pnames=letters[1:5])
+W1 <- ggrl(W, 'a', letters[2:4],'e')  # 6-element list
+W2 <- ggrl(W, 'b', letters[3:5],'a')  # 6-element list
 
-like_single_list(rep(1/7,6),W1)
-like_series(rep(1/7,6),list(W1,W2))
+like_single_list(equalp(W1),W1)
+like_series(equalp(W1),list(W1,W2))
 
 # run 10 races:
 r1 <- rrank(10,p=(7:1)/28)
@@ -110,13 +110,13 @@ colnames(r1) <- letters[1:7]
 W <- rank_likelihood(r1)
 
 H <- hyper2()
-for(i in 1:10){H <- H+race(sample(letters[1:9],sample(6,1),replace=FALSE))}
-equalp.test(H)$p.value  # should not be significant (null is true)
+for(i in 1:20){
+  H <- H + race(sample(letters[1:5],sample(3,1),replace=FALSE))
+}
+equalp.test(H) # should not be significant (null is true)
 
-
-H <- hyper2(pnames=letters[1:5])
-H2 <- choose_losers(H,letters[1:4],letters[1:2])   # {a,b} vs {c,d}; {a,b} lost
-maxplist(H2)
-
+H1 <- hyper2(pnames=letters[1:5])
+H2 <- choose_losers(H1,letters[1:4],letters[1:2])   # {a,b} vs {c,d}; {a,b} lost
+maxplist(H2,control=list(maxit=1))  # control set to save time
 
 }

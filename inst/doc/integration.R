@@ -10,40 +10,20 @@ ignore <- require(magrittr,quietly=TRUE)
 ###################################################
 ### code chunk number 2: chess_show
 ###################################################
-data(chess)
 chess
 
 
 ###################################################
-### code chunk number 3: chess_normalizing
+### code chunk number 3: integration.Rnw:200-204
 ###################################################
-B(chess)
+x <- c(a=1, b=2, c=3, d=4)  # needs a named vector
+ans1 <- B(dirichlet(alpha = x),tol=0.1)
+ans2 <- prod(gamma(x))/gamma(sum(x)) 
+c(numerical=ans1,theoretical=ans2)   # should agree
 
 
 ###################################################
-### code chunk number 4: integration.Rnw:137-139
-###################################################
-f <- function(p){loglik(indep(p),chess) > loglik(c(1,1)/3,chess)}
-probability(chess, disallowed=f,tol=0.01)
-
-
-###################################################
-### code chunk number 5: integration.Rnw:147-149
-###################################################
-T.lt.A <- function(p){p[1]<p[2]}
-probability(chess, disallowed=T.lt.A,tol=0.001)
-
-
-###################################################
-### code chunk number 6: integration.Rnw:192-195
-###################################################
-x <- c(a=1,b=2,c=3,d=4)  # needs a named vector
-B(dirichlet(x))
-prod(gamma(1:4))/gamma(sum(1:4))
-
-
-###################################################
-### code chunk number 7: integration.Rnw:202-205
+### code chunk number 4: integration.Rnw:211-214
 ###################################################
 f <- function(p){p[1]<p[2]}
 H <- dirichlet(alpha=c(a=3,b=3,c=3,d=3))
@@ -51,22 +31,21 @@ probability(H,f,tol=0.1)
 
 
 ###################################################
-### code chunk number 8: integration.Rnw:210-212
+### code chunk number 5: integration.Rnw:223-225
 ###################################################
 g <- function(p){(p[1]<p[2]) & (p[2]<p[3])}
 1-probability(H,disallowed=g,tol=0.1)
 
 
 ###################################################
-### code chunk number 9: integration.Rnw:221-224
+### code chunk number 6: integration.Rnw:237-239
 ###################################################
-data("oneill")                    # load the dataset
 icons
 maxp(icons)
 
 
 ###################################################
-### code chunk number 10: integration.Rnw:262-266
+### code chunk number 7: integration.Rnw:277-281
 ###################################################
 f1 <- function(p){p[1] > 1/6}
 f2 <- function(p){p[1] > max(fillup(p)[-1])}
@@ -75,19 +54,13 @@ f4 <- function(p){max(fillup(p)[1:2]) > min(fillup(p)[3:6])}
 
 
 ###################################################
-### code chunk number 11: integration.Rnw:275-276
-###################################################
-probability(icons, disallowed=function(p){p[1] > 1/6}, tol=0.1)
-
-
-###################################################
-### code chunk number 12: integration.Rnw:285-286
+### code chunk number 8: integration.Rnw:303-304
 ###################################################
 pchisq(2*2.608,df=1,lower.tail=FALSE)
 
 
 ###################################################
-### code chunk number 13: integration.Rnw:341-351
+### code chunk number 9: integration.Rnw:359-369
 ###################################################
 H <- hyper2()
 H["t00"] <- 18
@@ -102,7 +75,7 @@ H
 
 
 ###################################################
-### code chunk number 14: integration.Rnw:359-364
+### code chunk number 10: integration.Rnw:377-382
 ###################################################
 free <- maxp(H,give=TRUE)
 m <- fillup(free$par)
@@ -112,7 +85,7 @@ free$value
 
 
 ###################################################
-### code chunk number 15: integration.Rnw:369-373
+### code chunk number 11: integration.Rnw:387-391
 ###################################################
 obj <- function(p){-loglik(p,H)}   # objective func
 gr  <- function(p){-gradient(H,p)} # gradient, needed for speed

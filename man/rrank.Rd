@@ -16,7 +16,7 @@ rrank(n = 1, p, pnames=NULL, fill = FALSE, rnames=NULL)
   \item{pnames}{Character vector (\dQuote{player names}) specifying
     names of the columns}
   \item{rnames}{Character vector (\dQuote{row names} or \dQuote{race
-      names}) specifying names of the rows}mv
+      names}) specifying names of the rows}
   \item{fill}{Boolean, with default \code{FALSE} meaning to interpret
     the elements of \code{p} as strengths, notionally summing to one;
     and \code{TRUE} meaning to augment \code{p} with a fillup value}
@@ -101,15 +101,14 @@ Note that function \code{rrank()} returns an object of class
 \examples{
 ptrue <- (4:1)/10
 names(ptrue) <- letters[1:4]
-rrank(100,p=ptrue)
+rrank(10,p=ptrue)
 
-r1 <- rrank(100,p=ptrue)
-r2 <- rrank(10,p=ptrue)
+H <- rank_likelihood(rrank(40,p=ptrue))
+mH <- maxp(H)   # should be close to ptrue
 
-H <- rank_likelihood(r1)
-maxp(H)   # should be close to ptrue
+## Following code commented out because it takes too long:
+# H <- H + rank_likelihood(rrank(30,mH)) # run some more races
+# maxp(H)
 
-H <- H + rank_likelihood(rrank(100,maxp(H)))
-maxp(H)
 
 }

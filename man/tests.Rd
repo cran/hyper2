@@ -1,5 +1,6 @@
 \name{tests}
 \alias{equalp.test}
+\alias{knownp.test}
 \alias{samep.test}
 \alias{specificp.test}
 \alias{print.equalptest}
@@ -11,9 +12,11 @@
 \alias{specificp.le.test}
 \title{Hypothesis testing}
 \description{\loadmathjax
-  Tests different nulls against a free alternative}
+  Tests different nulls against a free alternative
+}
 \usage{
 equalp.test(H, ...)
+knownp.test(H, p, ...)
 samep.test(H, i, give=FALSE, ...)
 specificp.test(H, i, specificp=1/size(H),
          alternative = c("two.sided","less","greater"),  ...)
@@ -24,12 +27,12 @@ specificp.lt.test(H, i, specificp=1/size(H), ...)
 }
 \arguments{
   \item{H}{A likelihood function, an object of class \code{hyper2}}
+  \item{p}{In \code{equalp.test()}, putative strength vector to be
+    tested}
   \item{...}{Further arguments passed by \code{equalp.test()} to
     \code{maxp()} and ignored by \code{print.hyper2test()}}
-  \item{i,specificp}{Function \code{specificp.test()} tests the
-    hypothesis that \eqn{p_i} is equal to \code{specificp}.  Function
-    \code{samep.test()} has \code{i} an integer vector of strengths.
-    The null is that \code{p[i[1]] == p[i[2]] == ... == p[i[r]]}}
+  \item{i}{A character vector of names}
+  \item{specificp}{Strength, real number between 0 and 1}
   \item{alternative}{a character string specifying the alternative
     hypothesis, must be one of \code{two.sided} (default),
     \code{greater} or \code{less}.  You can specify just the initial
@@ -54,19 +57,26 @@ specificp.lt.test(H, i, specificp=1/size(H), ...)
   own print method.
 
 \itemize{
-  \item Function \code{equalp.test()} tests
-  \mjeqn{H_0\colon p_1=p_2=\cdots=p_n=\frac{1}{n}}{H0: p1=p2=...=pn=1/n}
+  \item Function \code{equalp.test(H,p)} tests the null that all
+  strengths are equal to vector \code{p}.  If \code{p} is missing, it
+  tests \mjeqn{H_0\colon p_1=p_2=\cdots=p_n=\frac{1}{n}}{H0:
+    p1=p2=...=pn=1/n}, for example \code{equalp.test(icons)}
+  \item Function \code{knownp.test()} tests the null that the strengths
+  are equal to the elements of named vector \code{p}; it is a
+  generalization of \code{equalp.test()}.  Example:
+  \code{knownp.test(icons,zipf(6))}. 
   \item Function \code{specificp.test(H,i,p)} tests
-  \mjeqn{H_0\colon p_i=p}{H0: p_i=p}
+  \mjeqn{H_0\colon p_i=p}{H0: p_i=p}, for example
+  \code{specificp.test(icons,"NB",0.1)}
   \item Function \code{samep.test()} tests \mjeqn{H_0\colon
-  p_{i_1}=p_{i_2}=\cdots=p_{i_k}}{omitted}.
+  p_{i_1}=p_{i_2}=\cdots=p_{i_k}}{omitted}, for example
+  \code{samep.test(icons,c("NB","L"))}
   \item Functions \code{specificp.ne.test(H,i,p)},
   \code{specificp.gt.test(H,i,p)}, and \code{specificp.lt.test(H,i,p)}
   are low-level helper functions that implement one- or two-sided versions
   of \code{specificp.test()} via the \code{alternative} argument,
   following \code{t.test()}
 }
-
 }
 
 \value{
@@ -106,9 +116,13 @@ idiom is involved.
 
 \examples{
 
-equalp.test(volvo)
+equalp.test(chess)
 
 samep.test(icons,c("NB","L"))
+knownp.test(icons,zipf(icons))
+
+
+
 
 
 }

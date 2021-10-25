@@ -33,7 +33,8 @@ equalp(H)
   \item{SMALL}{Numerical minimum for probabilities}
   \item{maxtry}{Integer specifying maximum number of times to try
     \code{constrOptim()} with slightly differing start points, to avoid
-    the stupid \code{wmmin is not finite} bug, bugzilla id 17703}
+    a known R bug which reports \code{wmmin is not finite}, bugzilla
+    id 17703}
   \item{...}{Further arguments which \code{maxp()} passes to
     \code{constrOptim()}}
 }
@@ -94,6 +95,13 @@ equalp(H)
 
   This functionality is peculiarly susceptible to off-by-one errors.
 
+  The built-in datasets generally include a pre-calculated result of
+  running \code{maxp()}; thus hyper2 object \code{icons} and
+  \code{icons_maxp} are included in the same \code{.rda} file.
+
+  Function \code{maxp()} can trigger a known R bug (bugzilla id 17703)
+  which reports \dQuote{\code{wmmin is not finite}}. 
+
 }
 \seealso{\code{\link{gradient}},\code{\link{fillup}}}
 \examples{
@@ -102,6 +110,6 @@ maxp(icons)
 
 W <- hyper2(pnames=letters[1:5])
 W1 <- ggrl(W, 'a', letters[2:3],'d')  # W1 is a suplist object
-maxp(W1)
+\dontrun{maxp(W1)}  # takes a long time to maximize a suplist
 
 }

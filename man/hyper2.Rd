@@ -4,6 +4,8 @@
 \alias{brackets.hyper2}
 \alias{powers}
 \alias{powers.hyper2}
+\alias{powers<-}
+\alias{powers<-.hyper2}
 \alias{pnames}
 \alias{pnames.hyper2}
 \alias{pnames.suplist}
@@ -50,26 +52,37 @@ suitable form; for example, a matrix is interpreted as rows of brackets.
 
 Functions \code{pnames()} and \code{pnames<-()} are the accessor and
 setter methods for the player names.  Length-zero character strings are
-acceptable.
+acceptable player names.  The setter method \code{pnames<-()} can be
+confusing.  Idiom such as \code{pnames(H) <- value} does not change the
+likelihood function of \code{H} (except possibly its domain).  When
+called, it changes the \code{pnames} internal vector, and will throw an
+error if any element of \code{c(brackets(H))} is not present in
+\code{value}.  It has two uses: firstly, to add players who do not
+appear in the brackets; and secondly to rearrange the \code{pnames}
+vector (the canonical use-case is \code{pnames(H) <- rev(pnames(H))}).
+If you want to change the player names, use \code{psubs()} to substitute
+players for other players.
 
 Function \code{is_valid_hyper2()} tests for valid input, returning a
-Boolean.  Note that it is perfectly acceptable to have an element of
+Boolean.  This function returns an error if a bracket contains a
+repeated element, as in \code{hyper2(list(c("a","a")),1)}.
+
+Note that it is perfectly acceptable to have an element of
 \code{pnames} that is not present in the likelihood function (this would
 correspond to having no information about that particular player).
 
 Function \code{size()} returns the (nominal) length \eqn{n} of
 nonnegative vector \eqn{p=\left(p_1,\ldots,p_n\right)}{p=(p_1,...,p_n)}
-where \eqn{p_1+\cdots+p_n=1}{p_1+...+p_n=1}.  Note that function
-\code{lhyper2()} takes the vector
-\eqn{p=\left(p_1,\ldots,p_{n-1}\right)}{p=(p_1,...,p_{n-1})}.
+where \eqn{p_1+\cdots+p_n=1}{p_1+...+p_n=1}.
+
 }
-\note{The empty string is a perfectly valid name}
 \author{Robin K. S. Hankin}
 \seealso{
   \code{\link{Ops.hyper2}},
   \code{\link{Extract.hyper2}},
   \code{\link{loglik}},
   \code{\link{hyper2-package}}
+  \code{\link{psubs}}
 }
 \examples{
 o <- hyper2(list("a","b","c",c("a","b"),letters[1:3]),1:5) 

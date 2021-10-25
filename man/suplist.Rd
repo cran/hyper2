@@ -102,15 +102,14 @@ W1 <- ggrl(W, 'a', letters[2:3],'d')  # 2-element list
 W2 <- ggrl(W, 'e', letters[1:3],'d')  # 6-element list
 W3 <- ggrl(W, 'c', letters[4:5],'a')  # 2-element list
 
-# likelihood function for indendent observations  W1,W2,W3:
+# likelihood function for independent observations  W1,W2,W3:
 
 W1+W2+W3 # A 2*6*2=24-element list
 
 like_single_list(indep(equalp(W)),W1+W2+W3)
 
 
-dotchart(maxplist(W1+W1+W3),pch=16)
-
+\dontrun{dotchart(maxplist(W1+W1+W3),pch=16)} # takes a long time
 
 }
 \keyword{symbolmath}

@@ -14,7 +14,7 @@ calc_from_scratch <- FALSE
 
 
 ###################################################
-### code chunk number 3: hyper2.Rnw:102-103
+### code chunk number 3: hyper2.Rnw:111-112
 ###################################################
 ignore <- require(magrittr,quietly=TRUE)
 
@@ -129,7 +129,7 @@ H
 
 
 ###################################################
-### code chunk number 17: hyper2.Rnw:583-587
+### code chunk number 17: hyper2.Rnw:593-597
 ###################################################
 L <- ggrl(H, 
           winner     = "Laura",
@@ -192,7 +192,7 @@ pchisq(2*(78.7-66.2),df=12,lower.tail=FALSE)
 
 
 ###################################################
-### code chunk number 24: hyper2.Rnw:749-750
+### code chunk number 24: hyper2.Rnw:745-746
 ###################################################
 like_series(indep(masterchef_constrained_maxp), masterchef)
 
