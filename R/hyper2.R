@@ -17,8 +17,9 @@ setGeneric("powers<-",function(x,value){standardGeneric("powers<-")})
 setGeneric("pnames"  ,function(x){standardGeneric("pnames"  )})
 `brackets` <- function(H){UseMethod("brackets")}
 `powers`   <- function(H){UseMethod("powers"  )}
+`powers<-` <- function(H,value){UseMethod("powers<-")}
 `pnames`   <- function(H){UseMethod("pnames"  )}
-`brackets.hyper2` <- function(H){disord(H$brackets)}
+`brackets.hyper2` <- function(H){disord(H$brackets,h=hashcal(H))}
 
 `powers.hyper2` <- function(H){
   if(is_constant(H)){
@@ -26,18 +27,12 @@ setGeneric("pnames"  ,function(x){standardGeneric("pnames"  )})
   } else {
     out <- H$powers
   }
-  return(disord(out))
+  return(disord(out,h=hashcal(H)))
 }
 
-`powers<-.hyper2` <- function(x,value){
-  jj <- powers(x)
-  if(is.disord(value)){
-    stopifnot(consistent(brackets(x),value))
-    jj <- value
-  } else {
-    jj[] <- value  # the meat
-  }
-  hyper2(brackets(x),jj)
+`powers<-.hyper2` <- function(H,value){
+    stopifnot(consistent(powers(H),value))
+    hyper2(elements(brackets(H)),elements(value))
 }
 
 `pnames.hyper2` <- function(H){ H$pnames }
@@ -100,6 +95,11 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 }
   
 `print.hyper2` <- function(x,...){
+  if(!isFALSE(getOption("give_warning_on_nonzero_power_sum"))){
+      if(sum(powers(x)) !=0){
+          warning("powers have nonzero sum")
+      }
+  }
   b <- elements(brackets(x))
   powers <- elements(powers(x))
   if(length(b)==0){  # not is.null(b)
@@ -193,9 +193,8 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 }
 
 `hyper2_prod` <- function(H,n){
-  stopifnot(is.numeric(n))
-  stopifnot(length(n)==1)
-  return(hyper2(brackets(H),powers(H)*n,pnames=pnames(H)))
+    powers(H) <- powers(H)*n
+    return(H)
 }
 
 `Ops.hyper2` <-
@@ -270,7 +269,9 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     } else if(is.list(first)){
       wanted <- dots[[1]]
     } else if(is.matrix(first)){
-      wanted <- as.list(as.data.frame(t(first)))
+        wanted <- as.list(as.data.frame(t(first)))
+    } else if(is.disord(first)){
+        return(hyper2(elements(brackets(x)[first]),elements(powers(x)[first])))
     } else if(is.vector(first)){
       wanted <- list(first)
     } else {
@@ -387,14 +388,14 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 }
 
 `maxp` <- function(H, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6, n=10, show=FALSE, justlikes=FALSE, ...){
-
+    if(isTRUE(getOption("use_alabama"))){ms <- maxp_single2} else {ms <- maxp_single}
     best_so_far <- -Inf # best (i.e. highest) likelihood found to date
     likes <- rep(NA,n)
     if(is.null(startp)){ startp <- indep(equalp(H)) }
 
     for(i in seq_len(n)){
         if(i>1){startp <- startp+runif(size(H)-1,max=SMALL/size(H))}
-        jj <- maxp_single(H, startp=startp, give=TRUE, fcm=fcm, fcv=fcv, SMALL=SMALL, ...)
+        jj <- ms(H, startp=startp, give=TRUE, fcm=fcm, fcv=fcv, SMALL=SMALL, ...)
         likes[i] <- jj$value
         if(show){cat(paste(i,"; ", best_so_far, "  " , jj$value,"\n", sep=""))}
         if(jj$value > best_so_far){ # that is, if we have found something better
@@ -467,11 +468,60 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     }
 }
 
+## Function maxp_single2() is like maxp_single() but uses the alabama
+## package for constrained optimization instead of constrOptim() with
+## its stupid wmmin finite error.
+
+
+
+
+## above takes UI and CI [intended for constrOptim()] and returns a function
+
+`maxp_single2` <- function(H, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6, maxtry=100, ...){
+    if(inherits(H,"suplist")){return(maxplist(Hlist=H,startp=startp,give=give,fcm=fcm,fcv=fcv,...))}
+    
+    n <- size(H)
+    if(is.null(startp)){
+        startp <- rep(1/n,n-1)
+    }
+
+    objective <- function(p){ -loglik(p,H) }
+    gradfun   <- function(p){ -(gradient(H,p))} #NB minus signs
+    
+    UI <- rbind(
+        diag(nrow=n-1),  # regular: p1 >=0, p2 >= 0, ..., p_{n-1} >= 0
+        -1,              # fillup: p_n = 1-(p1+p2+...+p_{n-1}) >= 0
+        fcm)             # further problem-specific constraints
+    CI <- c(
+        rep(SMALL,n-1),  # regular
+        -1+SMALL,        # fillup
+        fcv)             # further contraint vector
+
+        out <- constrOptim.nl(
+            par = startp,
+            fn = objective,
+            gr  = gradfun,
+            hin = function(x){drop(UI%*%x - CI)},
+            control.outer = list(trace=FALSE),
+            ...)
+   
+    out$value <- -out$value # correct for -ve sign in objective()
+    
+    if(give){
+      return(out)
+    } else {
+      jj <- fillup(out$par)
+      if(!identical(pnames(H),NA)){names(jj) <- pnames(H)}
+      return(jj)
+    }
+}
+
 `maxp_simplex` <- function(H, n=100, show=FALSE, give=FALSE, ...){
+    if(isTRUE(getOption("use_alabama"))){ms <- maxp_single2} else {ms <- maxp_single}
     best_so_far <- -Inf # best (i.e. highest) likelihood found to date
     likes <- rep(NA,n)
     for(i in seq_len(n)){
-        jj <- maxp_single(H, startp=indep(rp_unif(1,H)), give=TRUE, ...)
+        jj <- ms(H, startp=indep(rp_unif(1,H)), give=TRUE, ...)
         likes[i] <- jj$value
         if(show){cat(paste(i,"; ", best_so_far, "  " , jj$value,"\n", sep=""))}
         if(jj$value > best_so_far){ # that is, if we have found something better
@@ -499,10 +549,17 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     
     UI <- rbind(diag(nrow = n - 1), -1, fcm)
     CI <- c(rep(SMALL, n - 1), -1 + SMALL, fcv)
-    out <- constrOptim(theta = startp, f = objective, grad = NULL, 
-        ui = UI, ci = CI, ...)
-    out$value <- -out$value
-    if (give) {
+
+    if(isTRUE(getOption("use_alabama"))){
+        out <- constrOptim.nl(par = startp, fn = objective, gr = NULL, 
+                              hin = function(x){drop(UI%*%x - CI)},
+                              control.outer = list(trace=FALSE),...)
+    } else {
+        out <- constrOptim(theta = startp, f = objective, grad = NULL, 
+                           ui = UI, ci = CI, ...)
+    }
+        out$value <- -out$value
+        if (give) {
         return(out)
     }
     else {
@@ -1067,5 +1124,45 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
   } else {
     return(out)
   }
+}
+
+`zermelo` <- function(M,maxit=100,start,tol=1e-10,give=FALSE){
+    diag(M) <- 0  # usual convention is NA on the diagonal
+    rM <- rowSums(M)  # only need to calculate this once
+    M <- M+t(M)
+    if(missing(start)){
+        p <- rep(1/nrow(M),nrow(M))  # starting point for iteration
+    } else {
+        p <- start
+    }
+    if(give){
+        pout <- matrix(0,maxit+1,ncol(M))
+        colnames(pout) <- colnames(M)
+        pout[1,] <- p
+    }
+    for(i in seq_len(maxit)){
+        pnew <- rM/colSums(M/outer(p,p,`+`))  # the meat
+        pnew[is.nan(pnew)] <- 0
+        pnew <- pnew/sum(pnew)  # normalize
+        if(give){pout[i+1,] <- pnew}
+        if(all(abs(p-pnew)<tol)){break}else{p <- pnew}  # maybe finish early
+    }
+    if(give){
+        return(pout[seq_len(i+1),])
+    } else {
+        return(pnew)
+    }
+}
+
+`pairwise` <- function(M){
+    diag(M) <- 0
+    if(is.null(rownames(M))){
+        rownames(M) <- paste("p",seq_len(nrow(M)),sep="_")
+        colnames(M) <- rownames(M)
+    }
+    jj <- M + t(M)
+    
+    index <- which(upper.tri(M),arr.ind=TRUE)
+    dirichlet(rowSums(M)) - hyper2(apply(index,1,function(x){rownames(M)[x]},simplify=FALSE),jj[index])
 }
 

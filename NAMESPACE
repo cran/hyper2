@@ -11,9 +11,15 @@ importFrom("cubature", "adaptIntegrate")
 importFrom("graphics", "abline", "par", "text","points")
 
 importFrom("disordR","disord")
+importFrom("disordR","hashcal")
 importFrom("disordR","consistent")
 importFrom("disordR","elements")
 importFrom("disordR","is.disord")
+importFrom("disordR","lapply")
+
+importFrom("alabama","constrOptim.nl")
+
+importFrom("calibrator","MH")
 
 import(methods)
 import(mathjaxr)
@@ -26,6 +32,7 @@ export(pnames)
   
 S3method(brackets,hyper2)
 S3method(powers,hyper2)
+S3method("powers<-",hyper2)
 S3method(pnames,hyper2)
 S3method(pnames,suplist)
 S3method("pnames<-",hyper2)

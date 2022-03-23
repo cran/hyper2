@@ -11,7 +11,7 @@
 
 <meta name="author" content="Robin K. S. Hankin" />
 
-<meta name="date" content="2021-10-25" />
+<meta name="date" content="2022-03-23" />
 
 <title>Public perception of climate change</title>
 
@@ -243,6 +243,7 @@ if (window.hljs) {
 
 
 
+
 <style type="text/css">
 .main-container {
   max-width: 940px;
@@ -263,6 +264,9 @@ button.code-folding-btn:focus {
 }
 summary {
   display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
 }
 pre code {
   padding: 0;
@@ -348,7 +352,7 @@ pre code {
 
 <h1 class="title toc-ignore">Public perception of climate change</h1>
 <h4 class="author">Robin K. S. Hankin</h4>
-<h4 class="date">2021-10-25</h4>
+<h4 class="date">2022-03-23</h4>
 
 </div>
 
@@ -454,7 +458,7 @@ H_E\colon p_1=p_2=\cdots=p_n=\frac{1}{n}.
 ## null hypothesis: sum p_i=1, p_1 = 0.1667
 ## null estimate:
 ##      NB       L      PB     THC      OA    WAIS 
-## 0.16667 0.19443 0.25600 0.18382 0.12256 0.07652 
+## 0.16667 0.19459 0.25623 0.18371 0.12254 0.07627 
 ## (argmax, constrained optimization)
 ## Support for null:  -177.6 + K
 ## 
@@ -466,7 +470,7 @@ H_E\colon p_1=p_2=\cdots=p_n=\frac{1}{n}.
 ## Support for alternative:  -175 + K
 ## 
 ## degrees of freedom: 1
-## support difference = 2.608
+## support difference = 2.607
 ## p-value: 0.02239 (two sided)</code></pre>
 <p>which tests a null of <span class="math inline">\(p_1\leqslant\frac{1}{6}\)</span>; see how the evaluate under the null is on the boundary and we have <span class="math inline">\(\hat{p_1}=\frac{1}{6}\)</span>. Compare the support of 2.607 with 2.608181 from the hyperdirichlet package. This exceeds Edwards’s two-units-of-support criterion; the <span class="math inline">\(p\)</span>-value is obtained by applying Wilks’s theorem on the asymptotic distribution of 2.</p>
 <p>Both these criteria indicate that we may reject that hypothesis that <span class="math inline">\(p_1\leqslant 1/6\)</span> and thereby infer <span class="math inline">\(p_1&gt;\frac{1}{6}\)</span>.</p>
@@ -516,7 +520,7 @@ ml</code></pre>
 <pre><code>## [1] -175.1</code></pre>
 <p>Thus the first element of <code>likes</code> corresponds to the maximum likelihood, constrained so that <span class="math inline">\(p_1\leqslant p_2\)</span>; the second element corresponds to the constraint that <span class="math inline">\(p_1\leqslant p_3\)</span>, and so on. The largest likelihood is the easiest constraint to break, in this case <span class="math inline">\(p_1\leqslant p_3\)</span>: this makes sense because <span class="math inline">\(p_3\)</span> has the second highest MLE after <span class="math inline">\(p_1\)</span>. The extra likelihood is given by</p>
 <pre class="r"><code>L1-ml</code></pre>
-<pre><code>## [1] 0.08418</code></pre>
+<pre><code>## [1] 0.08428</code></pre>
 <p>(the hyperdirichlet package gives 0.0853 here, a suprisingly small discrepancy given the difficulties of optimizing over a nonconvex region). We conclude that there is no evidence for <span class="math inline">\(p_1\geqslant\max\left(p_2,\ldots,p_6\right)\)</span>.</p>
 <p>It’s worth looking at the evaluate too:</p>
 <pre class="r"><code>o2 &lt;- function(Ul,Cl){
@@ -533,11 +537,11 @@ o2(c(-1, 0, 0, 0, 1), 0),  # p1 &lt;= p5
 o2(c(-2,-1,-1,-1,-1),-1)   # p1 &lt;= p6
 )</code></pre>
 <pre><code>##          p1     p2     p3     p4     p5      p6 support
-## [1,] 0.2118 0.2118 0.2262 0.1695 0.1114 0.06938  -175.8
-## [2,] 0.2383 0.1740 0.2383 0.1698 0.1107 0.06904  -175.1
-## [3,] 0.2091 0.1755 0.2279 0.2091 0.1099 0.06856  -176.0
+## [1,] 0.2117 0.2117 0.2263 0.1695 0.1114 0.06936  -175.8
+## [2,] 0.2384 0.1739 0.2384 0.1698 0.1104 0.06913  -175.1
+## [3,] 0.2091 0.1755 0.2278 0.2091 0.1099 0.06858  -176.0
 ## [4,] 0.1810 0.1766 0.2286 0.1651 0.1810 0.06767  -178.2
-## [5,] 0.1587 0.1777 0.2325 0.1646 0.1079 0.15866  -181.5</code></pre>
+## [5,] 0.1586 0.1777 0.2326 0.1646 0.1079 0.15864  -181.5</code></pre>
 <p>In the above, the evaluate is the first five columns (<span class="math inline">\(p-6\)</span> being the fillup) and the final column is the log-likelihood at the evaluate. See how the constraint is active in each line: <code>M[1,] == M[1:5,2:6]</code>. Also note that the largest log-likelihood is the second row: if we were to violate any of the constraints, it would be <span class="math inline">\(p_1&lt;p_3\)</span>, consistent with the fact that <span class="math inline">\(p_3\)</span> (polar bears) has the second highest strength, after <span class="math inline">\(p_1\)</span>.</p>
 </div>
 <div id="low-frequency-responses" class="section level2">
@@ -585,14 +589,14 @@ jj</code></pre>
 <p>(compare hyperdirichlet which gives 3.16, not sure why the difference). We should look at the maximum value:</p>
 <pre class="r"><code>   o(c( 0, 0, 0,-1, 1), 0,give=TRUE,start=start)</code></pre>
 <pre><code>## $par
-## [1] 0.2503 0.1736 0.2243 0.1418 0.1418
+## [1] 0.2503 0.1737 0.2242 0.1418 0.1418
 ## 
 ## $value
 ## [1] -175.7
 ## 
 ## $counts
 ## function gradient 
-##      551       86 
+##      482       77 
 ## 
 ## $convergence
 ## [1] 0
@@ -607,7 +611,7 @@ jj</code></pre>
 ## [1] 0.0001723
 ## 
 ## $likes
-##  [1] -175.7 -175.8 -175.7 -175.8 -175.8 -175.7 -175.7 -175.7 -175.8 -175.7</code></pre>
+##  [1] -175.7 -175.7 -175.8 -175.7 -175.8 -175.8 -175.7 -175.7 -175.7 -175.7</code></pre>
 <p>So the evaluate is at the boundary, for <span class="math inline">\(p_4=p_5\)</span>. I have no explanation for the discrepancy between this and that in the hyperdirichlet package.</p>
 </div>
 </div>

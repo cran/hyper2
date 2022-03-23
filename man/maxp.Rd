@@ -2,17 +2,21 @@
 \alias{maxp}
 \alias{maxplist}
 \alias{maxp_single}
+\alias{maxp_single2}
 \alias{maxp_simplex}
 \alias{equalp}
 \alias{allequal}
 \alias{equalprobs}
 \title{Maximum likelihood estimation}
-\description{Find the maximum likelihood estimate for p, also equal probabilities}
+\description{\loadmathjax
+  Find the maximum likelihood estimate for p, also equal probabilities}
 \usage{
 maxp(H, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6, n=10,
    show=FALSE, justlikes=FALSE, ...)
 maxplist(Hlist, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6, ...)
 maxp_single(H, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6,
+   maxtry=100, ...)
+maxp_single2(H, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6,
    maxtry=100, ...)
 maxp_simplex(H, n=100, show=FALSE, give=FALSE, ...)
 equalp(H)
@@ -50,6 +54,19 @@ equalp(H)
   If function \code{maxp()} is given a \code{suplist} object it
   dispatches to \code{maxplist()}.
 
+  Functions \code{maxp_single()} and \code{maxp_single2()} are helper
+  functions which perform a single constrained optimization using
+  \code{base::constrOptim()} or \code{alabama::constrOptim.nl()}
+  respectively.  The functions should produce identical (or at least
+  very similar) results.  They are used by \code{maxp()} and
+  \code{maxp_simplex()} which dispatch to either \code{maxp_single()} or
+  \code{maxp_single2()} depending on the value of option
+  \code{use_alabama}.  If \code{TRUE}, they will use (experimental)
+  \code{maxp_single2()}, otherwise (default) \code{maxp_single()}.
+  Function \code{maxp_single()} is prone to the \dQuote{wmmin not
+  finite} bug [bugzilla id 17703] but on the other hand is a bit
+  slower.  I am not sure which one is better at this time.
+ 
   Function \code{maxp_simplex()} is intended for complicated or flat
   likelihood functions where finding local maxima might be a problem.
   It repeatedly calls \code{maxp_single()}, starting from a different
@@ -79,8 +96,8 @@ equalp(H)
   }
 
   where in \code{UI}, the first \eqn{n-1} rows enforce nonnegativity of
-  \eqn{p_i}, \eqn{1\leq p < n}{1<=i<n}; row \eqn{n} enforces
-  nonnegativity of the fillup value \eqn{p_n}; and the remaining
+  \mjseqn{p_i}, \mjeqn{1\leq p < n}{1<=i<n}; row \mjseqn{n} enforces
+  nonnegativity of the fillup value \mjseqn{p_n}; and the remaining
   (optional) rows enforce additional linear constraints.  Argument
   \code{CI} is a vector with corresponding elements.
 
@@ -100,7 +117,9 @@ equalp(H)
   \code{icons_maxp} are included in the same \code{.rda} file.
 
   Function \code{maxp()} can trigger a known R bug (bugzilla id 17703)
-  which reports \dQuote{\code{wmmin is not finite}}. 
+  which reports \dQuote{\code{wmmin is not finite}}.  Setting option
+  \code{use_alabama} to \code{TRUE} makes the package use a different
+  optimization routine.
 
 }
 \seealso{\code{\link{gradient}},\code{\link{fillup}}}
