@@ -1,0 +1,645 @@
+---
+title: "Races with hyper3 objects"
+author: "Robin KS Hankin"
+date: "10/04/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+set.seed(1)
+knitr::opts_chunk$set(echo = TRUE)
+library("hyper2")
+library("disordR")
+```
+
+(takes about an hour to process without cache)
+
+<p style="text-align: right;">
+![](`r system.file("help/figures/hyper2.png", package = "hyper2")`){width=10%}
+</p>
+
+Consider a race in which there are six runners 1-6 but we happen to
+know that three of the runners (1,2,3) are clones of strength $p_a$,
+say, two of the runners (4,5) have strength $p_b$, and the final
+runner (6) is of strength $p_c$.  The runners race and the finishing order is:
+
+
+$$a\succ c\succ b\succ a\succ a \succ b$$
+
+Thus the winner was $a$, second place for $b$, third for $a$, and so
+on.  Alternatively we might say that $a$ came first, fourth, and
+fifth; $b$ came third and sixth, and $c$ came second.  The
+Plackett-Luce likelihood function for $p_a,p_b,p_c$ would be
+
+$$
+\frac{p_a}{3p_a+2p_b+p_c}\cdot
+\frac{p_c}{2p_a+2p_b+p_c}\cdot
+\frac{p_b}{2p_a+2p_b    }\cdot
+\frac{p_a}{2p_a+ p_b    }\cdot
+\frac{p_a}{ p_a+ p_b    }\cdot
+\frac{p_b}{      p_b    },\qquad p_a+p_b+p_c=1
+$$
+
+The likelihood function is easily specified in package idiom:
+
+
+```{r, label=definehyper3}
+H <- ordervec2supp3(c("a","c","b","a","a","b"))
+H
+```
+
+```{r, label=maximizeprobs, cache=TRUE}
+mH  <-  maxp(H)
+mH
+```
+
+We can test various hypotheses, for example that the competitors are of equal strength:
+
+```{r testequality, cache=TRUE}
+equalp.test(H)
+```
+
+showing that this small dataset does not allow one to say that the
+competitors differ.  However, it is easy to generate synthetic order
+statistics where one can reject the null of equality of strength:
+
+
+```{r,biggerrace,cache=TRUE}
+o <- rrace3(pn=c(a=20,b=11,c=7),ps=c(a=0.7,b=0.2,c=0.1))
+o
+H <- ordervec2supp3(o)
+H
+```
+
+Above, we specify that there are 20 $a$'s, 11 $b$'s and 7 $c$'s with
+strength $70\%$, $20\%$, and $10\%$ respectively.  Recall this means
+that, in a head-to-head between $a$ and $b$ we would have $a$ winning
+with probability $0.7/(0.7+0.2)=\frac{7}{9}$.
+
+```{r,bigraceestimation,cache=TRUE}
+mH <- maxp(H)
+mH
+pTRUE <- c(a=0.7,b=0.2,c=0.1)   # true values 
+mH - pTRUE # residual
+```
+
+Above we see a reasonably close agreement between the true values and the estimate.
+
+```{r,dothetest,cache=TRUE}
+equalp.test(H)
+```
+
+Above we see strong evidence to reject the hypothesis that
+$p_a=p_b=p_c=\frac{1}{3}$.  We may also test the hypothesis that the
+strength vector is equal to its true value:
+
+
+```{r,isittrue,cache=TRUE}
+knownp.test(H,pTRUE)
+```
+
+And above we see that there is no evidence to reject the hypothesis
+that the strengths are in fact the specified strengths in `pTRUE`.
+
+# Some simple cases: likelihood functions for order statistics with clones
+
+## Three competitors
+
+Here I consider some order statistics with nontrivial maximum
+likelihood Bradley-Terry strength.   The simplest nontrivial case is
+three competitors with strengths $a,a,b$ and finishing order $a\succ
+b\succ a$.  The likelihood function would be
+
+$$
+\frac{a}{2a+b}\cdot\frac{b}{a+b}
+$$
+
+In this case we know that $a+b=1$ so this is equal to
+$\mathcal{L}=\mathcal{L}(a)=\frac{a(1-a)}{1+a}$.
+
+$$
+\frac{d\mathcal{L}}{da}=\frac{(1+a)(1-2a)-a(1-a)}{(1+a)^2}=
+\frac{1-2a+a-2a^2 -a + a^2}{(1+a)^2}=
+\frac{1-2a-a^2}{(1+a)^2}
+$$
+
+This will be zero at $\sqrt{2}\pm 1$; we also note that
+$d^2\mathcal{L}/da^2=-4(1+a)^{-3}$, manifestly strictly negative for
+$0\leq a\leq 1$: the root is a maximum.
+
+
+```{r label=maxaba,cache=TRUE}
+maxp(ordervec2supp3(c("a","b","a")))
+```
+
+above, we see close agreement with the theoretical value of
+$(\sqrt{2}-1,1-\sqrt{2})\simeq (0.414,0.586)$.  Observe that the
+maximum likelihood estimate for $a$ is strictly less than 0.5, even
+though the finishing order is symmetric.  Using
+$\mathcal{L}(a)=\frac{a(1-a)}{1+a}$, we can show that
+$\log\mathcal{L}(\hat{a})=\log\left(3-2\sqrt{2}\right)\simeq -1.76$,
+where $\hat{a}=\sqrt{2}-1$ is the maximum likelihood estimate for $a$.
+Defining $\mathcal{S}=\log\mathcal{L}$ as the support [log-likelihood]
+we have
+
+$$\mathcal{S}=\mathcal{S}(a)=\log\left(\frac{a(1-a)}{1+a}\right)-\log\left(3-2\sqrt{2}\right)$$
+
+as a standard support function which has a maximum value of zero when
+evaluated at $\hat{a}=\sqrt{2}-1$.  For example, we can test the null
+that $a=b=\frac{1}{2}$, the statement that the competitors have equal
+Bradley-Terry strengths:
+
+
+```{r}
+a <- 1/2 # null
+(S_delta <- log( a*(1-a)/(1+a))- log(3-2*sqrt(2)))
+```
+
+Thus the additional support gained in moving from $a=\frac{1}{2}$ to
+the evaluate of $a=\sqrt{2}-1$ is 0.029, rather small [as might be
+expected given that we have only one rather uninformative observation,
+and also given that the maximum likelihood estimate ($\simeq 0.41$) is
+quite close to the null ($0.5$).  Nevertheless we can apply Wilks's
+theorem for a $p$-value:
+
+```{r}
+pchisq(-2*S_delta,df=1,lower.tail=FALSE)
+```
+
+The $p$-value is about 0.81, exceeding 0.05; thus we have no strong
+evidence to reject the null of $a=\frac{1}{2}$.  Further, we can use
+either analytical or numerical methods to find a credible interval.
+With an $n$-unit of support criterion the analytical solution to
+$\mathcal{S}(p)=-n$ is given by defining $X=\log(3-2\sqrt{2})-n$ and
+solving $p(1-p)/(1+p)=X$, or
+$p_\pm=\left(1-X\pm\sqrt{1+4X+X^2}\right)/2$, the two roots being the
+lower and upper limits of the credible interval.  Graphically:
+
+```{r}
+a <- seq(from=0,by=0.005,to=1)
+S <- function(a){log(a*(1-a)/((1+a)*(3-2*sqrt(2))))}
+plot(a,S(a),type='b')
+abline(h=c(0,-2))
+abline(v=c(0.02438102,0.9524271),col='red')
+abline(v=sqrt(2)-1)
+```
+
+
+### all results for AAB
+
+* $A\succ A\succ B\longrightarrow\frac{a^2}{1+a}$
+* $A\succ B\succ A\longrightarrow\frac{1-2a-a^2}{(1+a)^2}$
+* $B\succ A\succ A\longrightarrow\frac{1-a}{1+a}$
+
+Graphically
+
+```{r}
+f_aab <- function(a){a^2/(1+a)}
+f_aba <- function(a){a*(1-a)/(1+a)^2}
+f_baa <- function(a){(1-a)/(1+a)}
+
+p <- function(f,...){points(a,f(a)/max(f(a)),...)}
+plot(0:1,0:1,xlab="p(a)",ylab="Likelihood",type="n")
+p(f_aab,type="l",col="black")
+p(f_aba,type="l",col="red")
+p(f_baa,type="l",col="blue")
+legend(x=0.85,y=0.7,col=c("black","red","blue"),lty=1,pch=NA,legend=c("AAB","ABA","BAA"))
+abline(h=exp(-2),lty=2)
+```
+
+## Four competitors
+
+
+With four competitors we have five nontrivial order statistics which,
+without loss of generality, are:
+
+* $a\succ b\succ a\succ a$
+* $a\succ a\succ b\succ a$
+* $a\succ b\succ a\succ b$
+* $a\succ b\succ b\succ a$
+* $a\succ b\succ c\succ a$.
+
+Taking $a\succ b\succ a\succ b$ as an example we have
+
+$$
+\mathcal{L}_{a\succ b\succ a\succ b}(a)=
+\frac{a}{2a+2b}\cdot
+\frac{b}{ a+2b}\cdot
+\frac{a}{ a+ b}\cdot
+\frac{b}{    b}=\frac{a^2-a^3}{4-2a}
+$$
+
+the evaluate would be a root of $2a^2-7a+4$, or $(7-\sqrt{17})/4\simeq
+0.72$:
+
+
+```{r label=maxabab,cache=TRUE}
+maxp(ordervec2supp3(c("a","b","a","b")))
+```
+
+If we allow non-finishers there is another nontrivial order statistic,
+viz $a\succ b\succ\left\lbrace a,b\right\rbrace$ [thus one of the two
+$a$'s won, one of the $b$'s came second, and one of each of $a$ and
+$b$ failed to finish].
+
+$$
+\mathcal{L}(a)=
+\frac{a}{2a+2b}\cdot
+\frac{b}{ a+2b}\propto\frac{a(1-a)}{2-a}
+$$
+
+(see how the likelihood function is actually simpler than for the
+complete order statistic).  The evaluate would be $2-\sqrt{2}\simeq
+0.586$:
+
+```{r label=maxnonfinishers,cache=TRUE}
+o <- ordervec2supp3(c("a","b"),nonfinishers=c("a","b"))
+o
+maxp(o)
+```
+
+Now consider
+
+$$a\succ b\succ c\succ a$$
+
+with likelihood function
+
+$$
+\mathcal{L} =
+\frac{a}{2a+b+c}\cdot
+\frac{b}{ a+b+c}\cdot
+\frac{c}{ a  +c},\qquad a+b+c=1$$
+
+It can be shown that this has a maximum if $a^3+4a^2+4a-1=0$.
+Although cubic equations have analytical roots, the expression is
+complicated, and equal to about `c(a=0.2056,b=0.5466,c=0.2478)`:
+
+```{r,label=abca,cache=TRUE}
+maxp(ordervec2supp3(c("a","b","c","a")))
+```
+
+## Results for AAAB
+
+```{r,plotaaab,cache=TRUE}
+Hab <- function(i,n=4){
+  jj <- rep("a",n)
+  jj[i] <- "b"
+  ordervec2supp3(jj)
+}
+
+small <- 1e-5
+a <- seq(from=small,to=1-small,len=400)
+
+plot(0:1,c(0,1),type="n",xlab="p[a]",ylab="likelihood")
+dop <- function(w, n, ...){
+  Hjj <- Hab(w,n)
+  y <- sapply(a,function(p){loglik(c(a=p,b=1-p),Hjj,log=FALSE)})
+  points(a,y/max(y),type="l",...)
+}
+dop(1,4,col="black")
+dop(2,4,col="red")
+dop(3,4,col="blue")
+dop(4,4,col="green")
+```
+
+```{r,plotaaaaaaab,cache=TRUE}
+plot(0:1,c(0,1),type="n",xlab="p[a]",ylab="likelihood")
+for(i in 1:10){dop(i,10,col=rainbow(10)[i])}
+```
+
+```{r,plot40ab,cache=TRUE}
+plot(0:1,c(0,1),type="n",xlab="p[a]",ylab="likelihood")
+for(i in 1:40){dop(i,40,col=rainbow(40)[i])}
+```
+
+
+
+
+
+
+
+# Fisher information for simple cases for aab
+
+
+We have three possible finishing orders:
+
+$b\succ a\succ a$, probability $\frac{b}{2a+b}=\frac{1-a}{1+a}$.  And
+$\frac{\partial\log\mathcal{L}}{\partial a}=\frac{2}{p^2-1}$.
+
+$a\succ b\succ a$, probability $\frac{a}{2a+b}\cdot\frac{b}{a+b}=\frac{a(1-a)}{1+a}$. And
+$\frac{\partial\log\mathcal{L}}{\partial a}=\frac{a^2+2a-1}{a^3-a}$.
+
+$a\succ a\succ b$, probability $\frac{a}{2a+b}\cdot\frac{a}{a+b}=\frac{a^2}{1+a}$.  And
+$\frac{\partial\log\mathcal{L}}{\partial a}=\frac{a+2}{a^2+a}$.
+
+
+Thus the Fisher information is
+
+$$
+\frac{1-a}{1+a}\cdot\left(\frac{2}{a^2-1}\right)^2
++
+\frac{a(1-a)}{1+a}\cdot\left(\frac{a^2+2a-1}{a^3-a}\right)^2
++\frac{a^2}{1+a}\cdot\left(\frac{a+2}{a^2+a}\right)^2
+$$
+
+Simplifying,
+
+$$\mathcal{I}(a)=\frac{1+16a+18a^2-4a^3-15a^4-7a^5-a^6}{a(1-a)(1+a)^3}$$
+
+
+```{r}
+fisher <- function(a){(1+16*a+18*a^2-4*a^3-15*a^4-7*a^5-a^6)/(a*(1-a)*(1+a)^3)}
+a <- seq(from=0.05,to=0.95,by=0.01)
+plot(a,fisher(a))
+```
+
+# Estimation of strength
+
+We will try some random simulation where the strengths of the competitors is known:
+
+
+```{r,label=randomsimknownstrength,cache=TRUE}
+
+es <- replicate(100,maxp(ordervec2supp3(rrace3(pn=c(a=10,b=10),ps=c(a=1/2,b=1/2))))[1])
+```
+
+```{r,label=showestimates}
+hist(es)
+abline(v=1/2,lwd=5)
+```
+
+
+# Power test for `hyper3` objects compared with Mann-Whitney-Wilcox
+
+
+
+
+First do some stuff where the null is true:
+
+```{r,label=definepower}
+wilcox_pval <- function(a,b,pa,pb){
+  o <- rrace3(pn=c(a=a,b=b),ps=c(a=pa,b=pb))
+  wilcox.test(which(o=='a'),which(o=='b'))$p.value
+}
+
+hyper3_pval <- function(a,b,pa,pb){
+  o <- rrace3(pn=c(a=a,b=b),ps=c(a=pa,b=pb))
+  equalp.test(ordervec2supp3(o))$p.value
+}
+```
+
+
+
+```{r,label=dopowernulltrue,cache=TRUE}
+wil_p_h0 <- replicate(100,wilcox_pval(10,10,0.5,0.5))
+hyp_p_h0 <- replicate(100,hyper3_pval(10,10,0.5,0.5))
+```
+
+
+```{r,label=plotpvalnulltrue}
+plot(ecdf(wil_p_h0),col="black")
+plot(ecdf(hyp_p_h0),col="red",add=TRUE)
+legend("topleft",pch=16,lty=1,col=c("black","red"),legend=c("Wilcox","hyper3"))
+```
+
+Now some stuff where the null is false:
+
+
+```{r,label=dopower,cache=TRUE}
+wil_p <- replicate(100,wilcox_pval(10,10,0.7,0.3))
+hyp_p <- replicate(100,hyper3_pval(10,10,0.7,0.3))
+```
+
+```{r,label=plotpower}
+hist(wil_p)
+hist(hyp_p)
+par(pty="s")
+qqplot(wil_p,hyp_p,asp=1,xlim=c(0,1),ylim=c(0,1),pty="m")
+abline(0,1)
+qqplot(log(wil_p),log(hyp_p),asp=1,xlim=c(-6,1),ylim=c(-6,1),pty="m")
+abline(0,1)
+ks.test(wil_p,hyp_p)
+```
+
+
+
+# The constructors' championship
+
+Here we define likelihood function for the constructors' championship.
+
+```{r,dotheconst}
+jj <- read.table("constructor_2021.txt",header=TRUE)
+i <- seq(from=1,by=2,to=nrow(jj)) # extract every second entry for points
+constructor_points_2021 <- jj[i,ncol(jj)]
+names(constructor_points_2021) <- jj[i,1]
+
+constructor_points_2021 <- sort(constructor_points_2021,dec=TRUE)
+constructor_points_2021 
+
+constructor_table_2021 <- jj[,-ncol(jj)]
+constructor_table_2021[,1:17]
+constructor_2021_table <- constructor_table_2021
+```
+
+Looking at the first column we see that the constructors are Mercedes
+("`Merc`"), Red Bull Racing Honda ("`RBRH`"), and so on (see file
+`inst/constructor_names.txt` for a list of abbreviations).  Each
+constructor fields two cars in each race.  Looking at the next column,
+we see the order statistic for Bahrain (`BHR`).  We see that Mercedes
+came first and third, Red Bull came second and fifth, Ferrari sixth
+and eighth, and so on.
+
+```{r,maketheconst,cache=TRUE}
+constructor_2021 <- ordertable2supp3(constructor_table_2021)
+```
+
+Then
+
+
+```{r,label=maxconstr,cache=TRUE}
+constructor_2021_maxp <-  maxp(constructor_2021)
+mc <- constructor_2021_maxp  # saves typing
+```
+
+```{r,label=drawaconstructorpie}
+pie(mc)
+dotchart(mc,pch=16)
+ordertransplot(rank(-mc),rank(-constructor_points_2021),xlab="likelihood rank",ylab="points rank")
+```
+
+We may test the null of equal strengths:
+
+```{r,label=testequalityconstructor,cache=TRUE}
+equalp.test(constructor_2021)
+```
+
+and see that there is (very) strong evidence to reject this null.
+Further, we may test the hypothesis that the big four (viz Mercedes,
+Ferrari, Red Bull Racing Honda, and McLaren-Mercedes) are equal:
+
+```{r,label=testsameconstructor,cache=TRUE}
+samep.test(constructor_2021,c("Merc","Ferrari","RBRH","MM")) # ~10 mins
+```
+
+and fail to reject that null.  How about the mid-range constructors:
+
+
+```{r,label=testsameconstructorlowscores,cache=TRUE}
+samep.test(constructor_2021,c("ATH","ARRF","AR","AMM")) # ~ 10 mins
+```
+
+
+## Constructors championship with `cheering` or `tether` functionality
+
+
+```{r,Bahrain2021_to_support3}
+constructor_2021_table
+(cons <- constructor_2021_table[,1])
+(BHR <- as.numeric(constructor_2021_table[,2]))  # Bahrain
+names(BHR) <- cons
+BHR
+finishers <- BHR[!is.na(BHR)]
+finishers <- names(finishers[order(finishers)])  # in order
+nonfinishers <- names(BHR[is.na(BHR)])  # no particular order
+finishers
+nonfinishers
+u <- unique(c(finishers,nonfinishers))
+e <- seq_along(u)
+names(e) <- u
+e
+help <- rep(1.8,length(u))
+e
+help
+cheering3(v=finishers,e=e,help=help,nonfinishers=nonfinishers)
+```
+
+OK so now generalize it:
+
+```{r,definevenue3}
+venue3 <- function(ven,cons,help){
+   suppressWarnings(names(ven) <- cons)
+   finishers <- ven[!is.na(ven)]
+   finishers <- names(finishers[order(finishers)])  # in order
+   nonfinishers <- names(ven[is.na(ven)])  # no particular order
+   u <- unique(c(finishers,nonfinishers))
+   e <- seq_along(u)
+   names(e) <- u
+   help <- rep(help,length(u))
+   cheering3(v=finishers,e=e,help=help,nonfinishers=nonfinishers)
+}  # venue3() definition closes
+```
+
+Now use `venue3()` for all the venues in the 2021 season, with a common help:
+
+```{r,defineallvenues,cache=TRUE}
+set.seed(9)
+allvenues <- function(h){
+  H3 <- hyper3()
+  cons <- constructor_2021_table[,1]
+  for(i in seq(from=2,to=ncol(constructor_2021_table),by=1)){
+     H3 <- H3 + venue3(ven=as.numeric(constructor_2021_table[,i]), cons=cons,help=h)
+  }
+  return(H3)
+}
+## And maximize it for different help values:
+
+
+o <- function(h){maxp(allvenues(h),give=TRUE,n=1)$likes}
+l <- seq(from=0.9,to=2.5,len=11)
+L <- sapply(l,o)
+```
+
+```{r,plotsupport}
+plot(l,L-max(L),type='b')
+```
+
+Above, we are testing (and rejecting) the hypothesis that the various
+constructors are independent of one another.  We reject the hypothesis
+that $h=1$.  Noting that we control both for constructors'
+Plackett-Luce strengths, and on the assumption that the two drivers of
+any given constructor are of equal strengths, we still reject the
+hypothesis of conditional independence.
+
+
+```{r,findmaxlikeusingoptim,cache=TRUE}
+jj <- optimize(o,c(1.3,1.5),maximum=TRUE)
+jj
+```
+
+```{r,likelihoodnull,cache=TRUE}
+(jjnull <- o(1))
+```
+
+```{r}
+pchisq(2*(jj$objective-jjnull),df=1,lower.tail=FALSE)
+```
+
+
+
+```{r,label=maxwithfour,cache=TRUE}
+mv_max  <- maxp(allvenues(jj$maximum),give=TRUE,n=1)
+mv_null <- maxp(allvenues(1),give=TRUE,n=1)
+```
+
+```{r,analyse4}
+x <- mv_max$par
+y <- mv_null$par
+par(pty='s')
+plot(x,y,asp=1,pch=16,xlim=c(0,0.2),ylim=c(0,0.2),xlab="null",ylab="max like")
+for(i in seq_along(x)){text(x[i],y[i],names(x)[i],pos=4,cex=0.7,col='gray')}
+abline(0,1)
+```
+
+# Constructors' championship 2020
+
+```{r,label=constructor2020,cache=TRUE}
+jj <- read.table("constructor_2020.txt",header=TRUE)
+i <- seq(from=1,by=2,to=nrow(jj)) # extract every second entry for points
+constructor_points_2020 <- jj[i,ncol(jj)]
+names(constructor_points_2020) <- jj[i,1]
+
+constructor_points_2020 <- sort(constructor_points_2020,dec=TRUE)
+constructor_points_2020
+
+constructor_table_2020 <- jj[,-ncol(jj)]
+constructor_table_2020[,1:17]
+constructor_2020_table <- constructor_table_2020
+constructor_2020 <- ordertable2supp3(constructor_table_2020)
+```
+
+```{r,label=maxpconstructor2020,cache=TRUE}
+constructor_2020_maxp <- maxp(constructor_2020,n=1)
+constructor_2020_maxp <- sort(constructor_2020_maxp,dec=TRUE)
+constructor_2021_maxp <- sort(constructor_2021_maxp,dec=TRUE)
+constructor_2020_maxp
+constructor_2021_maxp
+```
+
+```{r,label=changenames,cache=TRUE}
+constructor_2020_and_2021 <- psubs(constructor_2020,"Merc","Merc2020") + psubs(constructor_2021,"Merc","Merc2021")
+```
+
+
+```{r,doconstructor20202021test,cache=TRUE}
+ans <- samep.test(constructor_2020_and_2021,c("Merc2020","Merc2021"))
+```
+
+```{r,show20201test}
+ans
+```
+
+
+Note that the analysis in `javelin.Rmd` is appropriate here too, a
+nice example.
+
+### Package dataset {-}
+
+Following lines create `constructor.rda`, residing in the `data/`
+directory of the package.
+
+```{r,label=saveconstructordataset}
+save(
+constructor_2020_maxp,constructor_2020,constructor_2020_table,
+constructor_2021_maxp,constructor_2021,constructor_2021_table,
+file="constructor.rda")
+```

@@ -1,0 +1,244 @@
+---
+title: "fisher_information_plackett_luce_three_runners"
+output: html_document
+date: "2022-08-14"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem
+
+We consider three runners, $a,b,c$ and a Plackett-Luce likelihood
+function for the six possible orders.  We normalize so $a+b+c=1$ and
+take $c=1-a-b$.
+
+## $a\succ b\succ c$
+
+prob = $\frac{ab}{1-a}$
+
+$S=\log a+\log b-\log(1-a)$
+
+$\partial S/\partial a = a^{-1} + (1-a)^{-1}$
+
+$\partial S/\partial b=b^{-1}$
+
+$\partial^2 S/\partial a^2=-a^{-2} +(1-a)^{-2}\longrightarrow -pS_{aa}=\frac{(1-2a)b}{a(1-a)^3}$
+
+$\partial^2 S/\partial b^2 = -b^{-2}\longrightarrow -pS_{bb} = \frac{a}{(1-a)b}$
+
+$\partial^2 S/\partial a\partial b=0\longrightarrow -pS_{ab}= 0$ 
+
+## $a\succ c\succ b$
+
+prob = $\frac{a(1-a-b)}{1-a}$
+
+$S=\log a-\log(1-a) +\log(1-a-b)$
+
+$\partial S/\partial a = a^{-1} + (1-a)^{-1} + (1-a-b)^{-1}$
+
+$\partial S/\partial b = (1-a-b)^{-1}$
+
+$\partial^2S/\partial a^2 = -a^{-2}+(1-a)^{-2} + (1-a-b)^{-2}\longrightarrow -pS_{aa} =\frac{(1-2a)(1-a-b)}{a(1-a)^3} -\frac{a}{1-a}=\frac{(1-2a)(1-a-b) - a^2(1-a)^2}{a(1-a)^3}$
+
+$\partial^2S/\partial b^2=-(1-a-b)^{-2}\longrightarrow -pS_{bb}=\frac{a}{(1-a)(1-a-b)}$
+
+$\partial^2S/\partial a\partial b = (1-a-b)^{-2}\longrightarrow -pS_{ab}=\frac{-a}{(1-a)(1-a-b)}$
+
+## $b\succ a\succ c$
+
+prob = $\frac{ba}{1-b}$
+
+$S=\log a +\log b-\log(1-b)$
+
+$\partial S/\partial a = a^{-1}$
+
+$\partial S/\partial b = b^{-1} +(1-b)^{-1}$
+
+$\partial^2S/\partial a^2 = -a^{-2}\longrightarrow -pS_{aa}=\frac{-b}{a(1-b)}$
+
+$\partial^2S/\partial b^2=-b^{-2} +(1-b)^{-2}\longrightarrow -pS_{bb}=\frac{ab(-1+2b)}{b^2(1-b)^3}$
+
+$\partial^2S/\partial a\partial b=0\longrightarrow -pS_{ab}=0$
+
+## $b\succ c\succ a$
+
+prob = $\frac{a(1-a-b)}{1-b}$
+
+$S=\log a + \log(1-a-b) - \log(1-b)$
+
+$\partial S/\partial a=a^{-1} -(1-a-b)^{-1}$
+
+$\partial S/\partial b=-(1-a-b)^{-1} - (1-b)^{-1}$
+
+$\partial^2S\partial a^2=-a^{-2} -(1-a-b)^{-2}\longrightarrow -pS_{aa}=
+\frac{a^4 + 4 a^3 b + 6 a^2 b^2 - 4 a^2 b + 4 a b^3 - 6 a b^2 + 2 a b + b^4 - 2 b^3 + b^2
+}{a^2 (a + b - 1)^2 (a + b)^2}$
+
+$\partial^2S/\partial b^2 =-(1-a-b)^{-2} -(1-b)^{-2}$
+
+$\partial^2S/\partial a\partial b=-(1-a-b)^{-2}$
+
+## $c\succ a\succ b$
+
+prob=$\frac{a(1-a-b)}{a+b}$
+
+$S=\log a + \log(1-a-b) -\log(a+b)$
+
+$\partial S/\partial a=a^{-1} -(1-a-b)^{-1} -(a+b)^{-1}$
+
+$\partial S/\partial  b=-(1-a-b)^{-1}-(a+b)^{-1}$
+
+$\partial^2S/\partial a^2=-a^{-2} -(1-a-b)^{-2} +(a+b)^{-2}$
+
+$\partial^2S/\partial b^2=-(1-a-b)^{-2} +(a+b)^{-2}$
+
+$\partial^2S/\partial a\partial b=-(1-a-b)^{-2}+(a+b)^{-2}$
+
+## $c\succ b\succ a$
+
+prob=$\frac{b(1-a-b)}{1-b}$
+
+$S=\log b+\log(1-a-b) -\log(1-b)$
+
+$\partial S/\partial a=-(1-a-b)^{-1}$
+
+$\partial S/\partial b=b^{-1}+(1-b)^{-1} -(1-a-b)^{-1}$
+
+$\partial^2S/\partial a^2=-(1-a-b)^{-2}$
+
+$\partial^2S/\partial b^2=-b^{-2} +(1-b)^{-2}-(1-a-b)^{-2}$
+
+$\partial^2S/\partial a\partial b=-(1-a-b)^{-2}$
+
+
+## Fisher information matrix
+
+We seek $M$, the two-by-two matrix with entries
+$\sum_{\sigma\in\left\lbrace a\succ b\succ c,\ldots, c\succ b\succ
+a\right\rbrace}\operatorname{Prob}(\sigma)\frac{\partial^2\log\operatorname{Prob}(\sigma)}{\partial
+x\partial y}$, where $x,y\in\left\lbrace a,b\right\rbrace$.  Then the
+Fisher information is $\det(M)$.  The whole thing is a bit of a
+nightmare algebraically but we can use mathematica to help.
+
+```
+p1 = a*b/(1-a)
+p2 = a*(1-a-b)/(1-a)
+p3 = a*b/(1-b)
+p4 = b*(1-a-b)/(1-b)
+p5 = a*(1-a-b)/(a+b)
+p6 = b*(1-a-b)/(a+b)
+
+Faa = (
+    -p1*D[Log[p1],a,a]
+    -p2*D[Log[p2],a,a]
+    -p3*D[Log[p3],a,a]
+    -p4*D[Log[p4],a,a]
+    -p5*D[Log[p5],a,a]
+    -p6*D[Log[p6],a,a]
+)
+
+Fab = (
+    -p1*D[Log[p1],a,b]
+    -p2*D[Log[p2],a,b]
+    -p3*D[Log[p3],a,b]
+    -p4*D[Log[p4],a,b]
+    -p5*D[Log[p5],a,b]
+    -p6*D[Log[p6],a,b]
+)
+
+Fba = (
+    -p1*D[Log[p1],b,a]
+    -p2*D[Log[p2],b,a]
+    -p3*D[Log[p3],b,a]
+    -p4*D[Log[p4],b,a]
+    -p5*D[Log[p5],b,a]
+    -p6*D[Log[p6],b,a]
+)
+
+Fbb = (
+    -p1*D[Log[p1],b,b]
+    -p2*D[Log[p2],b,b]
+    -p3*D[Log[p3],b,b]
+    -p4*D[Log[p4],b,b]
+    -p5*D[Log[p5],b,b]
+    -p6*D[Log[p6],b,b]
+)
+
+Minimize[{Faa*Fbb-Fab*Fba,a>0,b>0,a+b<1},{a,b}]
+
+```
+
+gives `1323/16`.
+
+
+
+# The loser
+
+With $a,b,c, a+b+c=1$ or $c=1-a-b$ we have the probabilities of:
+
+## C losing
+
+either $a\succ b\succ c$ or $b\succ a\succ c$, mutually exclusive, probabilities add:
+
+$$\frac{a}{a+b+c}\cdot\frac{b}{b+c}+\frac{b}{a+b+c}\cdot\frac{a}{a+c}= ab\left(\frac{1}{1-a}+\frac{1}{1-b}\right)$$
+
+## B losing
+
+either $a\succ c\succ b$ or $c\succ a\succ c$:
+
+$$\frac{a}{a+b+c}\cdot\frac{c}{b+c}+\frac{c}{a+b+c}\cdot\frac{a}{a+b}= ac\left(\frac{1}{1-a}+\frac{1}{1-c}\right)
+=a(1-a-b)\left(\frac{1}{1-a}+\frac{1}{a+b}\right)
+$$
+
+## A losing
+
+either $b\succ c\succ a$ or $c\succ b\succ a$:
+
+$$\frac{b}{a+b+c}\cdot\frac{c}{a+c}+\frac{c}{a+b+c}\cdot\frac{b}{a+b}= b(1-a-b)\left(\frac{1}{1-b}+\frac{1}{a+b}\right)
+$$
+
+
+In mathematica:
+
+```
+c = 1-a-b
+pc =  a*b*(1/(1-a) + 1/(1-b))
+pb =  a*c*(1/(1-a) + 1/(1-c))
+pa =  b*c*(1/(1-b) + 1/(1-c))
+
+
+
+Flaa = (
+    -pa*D[Log[pa],a,a]
+    -pb*D[Log[pb],a,a]
+    -pc*D[Log[pc],a,a]
+)
+
+Flab = (
+    -pa*D[Log[pa],a,b]
+    -pb*D[Log[pb],a,b]
+    -pc*D[Log[pc],a,b]
+)
+
+Flba = (
+    -pa*D[Log[pa],b,a]
+    -pb*D[Log[pb],b,a]
+    -pc*D[Log[pc],b,a]
+)
+
+Flbb = (
+    -pa*D[Log[pa],b,b]
+    -pb*D[Log[pb],b,b]
+    -pc*D[Log[pc],b,b]
+)
+
+
+
+Minimize[{Faa*Fbb-Fab*Fba,a>0,b>0,a+b<1},{a,b}]
+```
+
+This gives $\frac{16875}{265}\simeq 65.918$.
+
+

@@ -1,0 +1,195 @@
+---
+title: "Carcinoma"
+output: bookdown::html_document2
+---
+
+```{r setup, include=FALSE}
+set.seed(0)
+knitr::opts_chunk$set(echo = TRUE)
+library("hyper2")
+library("magrittr")
+options("digits" = 5)
+```
+
+(takes maybe twenty minutes to run without cache.  The value of
+`carcinoma_maxp` is calculated separately [discussed below], and that
+takes a few days to run).
+
+<p style="text-align: right;">
+![](`r system.file("help/figures/hyper2.png", package = "hyper2")`){width=10%}
+</p>
+
+This is a short analysis of the carcinoma dataset presented by
+Agresti, table 13.1, p542.  Seven pathologists classified each of 118
+slides on the presence or absence of carcinoma in the uterine cervix.
+
+Here, the object of inference is the set of pathologists.  The
+probability model is as follows.  To each pathologist $i,1\leq i \leq
+7$, we assign a non-negative Bradley-Terry strength and require $\sum
+p_i=1$.  Given that two pathologists $i$ and $j$ differ in their
+diagnosis then the probability of $i$ diagnosing the presence, and $j$
+diagnosing the absence, of carcinoma is given by
+
+\begin{equation}\tag{1}
+\operatorname{Prob}(i^+,j^-) = \frac{p_i}{p_i+p_j},\qquad
+\operatorname{Prob}(i^-,j^+) = \frac{p_j}{p_i+p_j}
+\end{equation}
+
+(here superscripts $+$ and $-$ refer to a positive and negative
+diagnosis respectively).  Operationally the way we implement this in
+`hyper2` idiom is to posit an (unobservable) ranking on the
+clinicians: we place the clinicians in order from most convinced of
+the presence of carcinoma to the least convinced.  Thus a ranking of
+`DACBEGF` means that clinician `D` was most convinced of the presence
+of carcinoma and `F` least convinced.  Given this, and given a single
+slide, our actual observation might be that `D` and `A` diagnosed
+presence, and the others diagnosed absence, of carcinoma.  The
+corresponding entry would be
+
+```
+A B C D E F G
+T F F T F F F
+```
+
+We ask what rankings are consistent with this observation.  Any
+ranking with `A` and `D` ahead of `BCEFG` would be admissible.  In
+`hyper2` notation we would say
+
+$$\left\lbrace A,D\right\rbrace\succ\left\lbrace B,C,E,F,G\right\rbrace$$
+
+Any ranking where `A` and `D` occupy the first two ranks and
+`B`,`C`,`E`,`F`,`G` ranks three to seven, would be admissible.  We
+would have $2!5!=240$ rankings.  The probability of the actual ranking
+being one of these is simply the sum of these 48 as the rankings are
+mutually exclusive.
+
+Each ranking has a Plackett-Luce likelihood function which is created
+in `hyper2` idiom using the bespoke `race()` function.  Here, we use
+generalized grouped rank likelihood (`ggrl()`) to create an `lsl`
+object, as used by Hankin 2019 for the MasterChef analysis.  This
+furnishes a Bradley-Terry model for the clinicians' strength that
+recovers equation (1).
+
+
+```{r loadlib}
+carcinoma_table <- read.table("carcinoma.txt",header=TRUE)
+carcinoma_table[,1:7] <- carcinoma_table[,1:7] > 0
+carcinoma_table
+```
+
+
+
+```{r makeshorttable}
+wanted <- !(apply(carcinoma_table[,1:7],1,sum) %in% c(0,7))
+carcinoma_table_short <- carcinoma_table[wanted,]
+```		      
+
+```{r makeggrllist,cache=TRUE}
+W <- hyper2(pnames=LETTERS[1:7])
+Wi <- list()
+
+for(i in seq_len(nrow(carcinoma_table_short))){
+      jj <- unlist(carcinoma_table_short[i,1:7])
+      negative <- names(jj)[jj==0]
+      positive <- names(jj)[jj==1]
+      Wi[[i]] <- ggrl(W,positive,negative)
+}
+carcinoma <- lsl(Wi,powers= carcinoma_table_short$n)
+```
+
+There are several natural BT strengths to consider.  First, we could
+simply count how many times each clinician diagnoses carcinoma:
+
+```{r,label=countcarcinoma,cache=TRUE}
+carcinoma_count <- colSums(sweep(carcinoma_table_short[,1:7],1,carcinoma_table_short$n,"*"))
+names(carcinoma_count) <- colnames(carcinoma_table_short)[1:7]
+carcinoma_count <- carcinoma_count/sum(carcinoma_count)
+carcinoma_count
+lc <- loglik_lsl(carcinoma_count,carcinoma)
+```
+
+Secondly, Zipf:
+
+
+```{r,label=calccloglikzipf,cache=TRUE}
+z <- zipf(7)
+names(z) <- LETTERS[1:7]
+z
+lz <- loglik_lsl(z,carcinoma)  # takes about 30 seconds to run
+```
+
+Thirdly, equal probabilities:
+
+
+```{r,label=calcloglikequalp,cache=TRUE}
+e <- equalp(W)
+e
+le <- loglik_lsl(e,carcinoma) # takes about 30 seconds to run
+```
+
+The maximum likelihood estimate is somewhat more demanding.  To find
+the maximum likelihood estimate we would use:
+
+`maxp_lsl(carcinoma,startp=indep(carcinoma_count), control=list(trace=100))`
+
+
+but this takes many hours to run.  It gives the following:
+
+
+```{r,label=calculateloglikformaxp, cache=TRUE}
+carcinoma_maxp <- 
+c(A = 0.118778759012282, B = 0.542873969223425, C = 0.00654044305270073, 
+D = 0.00242693714895262, E = 0.202821434317779, F = 0.00130596252816986, 
+G = 0.125252494716691)
+carcinoma_maxp
+lmax <- loglik_lsl(carcinoma_maxp,carcinoma)
+```
+
+[of course, if `carcinoma_maxp` is available, we would use this as a
+starting point, viz
+`maxp_lsl(carcinoma,startp=indep(carcinoma_maxp))`].  With this, we
+are now in a position to compare these four points:
+
+```{r,label=showthreemethods}
+(results <- c(count=lc, zipf=lz, equal=le,maxp=lmax))
+results <- results - max(results)
+results
+```
+
+We can use Wilks here to assess the null of `carcinoma_count`.  We
+have $-2\log(\Lambda/\Lambda_0)\sim\chi^2_6$, giving us a $p$-value of
+
+```{r,label=calculatechisquaredpvalueforcount}
+pchisq(-2*results[1],df=6,lower.tail=FALSE)
+```
+
+
+What is the difference between `carcinoma_count` and `carcinoma_maxp`?
+
+
+```{r}
+carcinoma_count
+carcinoma_maxp
+ordertransplot(carcinoma_count,carcinoma_maxp)
+ordertransplot(log(carcinoma_count),log(carcinoma_maxp),plotlims=c(-8,0))
+```
+
+Agresti, table 13.1, p542.
+
+
+
+Landis, J. R., and G. G. Koch. 1977. An application of hierarchical
+kappa-type statistics in the assessment of majority agreement among
+multiple observers. Biometrics 33: 363-374.
+
+### Package dataset {-}
+
+Following lines create `carcinoma.rda`, residing in the `data/`
+directory of the package.
+
+
+```{r,label=savecarcinomadataset}
+save(carcinoma_table,carcinoma, carcinoma_count, carcinoma_maxp,file="carcinoma.rda")
+```
+
+

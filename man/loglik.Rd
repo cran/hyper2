@@ -7,7 +7,8 @@
 Log likelihood functions
 }
 \description{\loadmathjax
-Returns a log-likelihood for a given hyper2 object at a specific point
+  Returns a log-likelihood for a given \code{hyper2} or \code{hyper3}
+  object at a specific point in probability space
 }
 \usage{
 loglik(p, H, log = TRUE)
@@ -17,7 +18,7 @@ like_series(p,L,log=TRUE)
 
 }
 \arguments{
-  \item{H}{An object of class \code{hyper2}}
+  \item{H}{An object of class \code{hyper2} or \code{hyper3}}
   \item{p}{A probability point.  See details}
   \item{log}{Boolean with default \code{TRUE} meaning to return the
     log-likelihood and \code{FALSE} meaning to return the likelihood}
@@ -48,10 +49,33 @@ like_series(p,L,log=TRUE)
   constant.  Log-likelihood (also known as \emph{support}) is defined up
   to an arbitrary additive constant.
 
-  Currently, function \code{loglik()} interprets elements of a
-  probability vector according to their position in the vector; if given
-  a named vector, the names are ignored.  This might change in a future
-  release.
+  If function \code{loglik()} is given a probability vector of length
+  \code{n}, the vector must satisfy the unit sum constraint (up to a
+  small tolerance).  Also, it must be a named vector with names
+  (collectively) equal to the \code{pnames} of argument \code{H}.
+
+  \preformatted{
+  > pnames(chess)
+  [1] "Topalov" "Anand"   "Karpov"  
+  > loglik(c(Topalov=0.7,Anand=0.2,Karpov=0.1),chess)
+  [1] -69.45364
+  > loglik(c(Karpov=0.1,Topalov=0.7,Anand=0.2),chess)  # identical, just a different order
+  [1] -69.45364
+  }
+
+  But if given a vector of length \code{n-1} [e.g. the value of
+  \code{indep()}], then the names are ignored and the entries are
+  interpreted as the BT strengths of \code{pnames(H)[seq_len(n-1)]}:
+
+  \preformatted{
+  > loglik(c(0.7,0.2),chess)
+  [1] -69.45364
+  > loglik(c(foo=0.7,bar=0.2),chess)  # names are ignored 
+  [1] -69.45364
+  }
+
+  (the above applies for \code{H} a \code{hyper2} or \code{hyper3}
+  object).
 
   Empty brackets are interpreted consistently: that is, zero whatever
   the probability vector (although the print method is not perfect).
@@ -77,6 +101,8 @@ W2 <- ggrl(W, c('a','b'), c('c','d'),c('e','f'))  # 2^3=8 element list
 like_single_list(rep(1/6,5),W1)      # information from first observation
 like_series(rep(1/6,5),list(W1,W2))  # information from both observations
 
-
-
+# hyper3 objects:
+H3 <- ordervec2supp3(letters[c(1,2,3,3,2,1,2)])
+loglik(c(a=1,b=2,c=3)/6,H3)
+loglik(c(a=1,c=3,b=2)/6,H3) # identical
 }

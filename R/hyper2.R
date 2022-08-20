@@ -46,7 +46,9 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 
 ## setter methods end
 
-`is.hyper2` <- function(H){inherits(H,"hyper2")}
+`is.hyper2` <- function(H){inherits(H,"hyper2") & !inherits(H,"hyper3")}
+`is.hyper3` <- function(H){inherits(H,"hyper2") &  inherits(H,"hyper3")}
+
 `length.hyper2` <- function(x){length(x$brackets)}
 
 `is_constant` <- function(H){ length(H)==0 }
@@ -76,14 +78,16 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 }
 
 `as.hyper2` <- function(L,d,pnames){
-  if(is.matrix(L)){
-    L <- as.list(as.data.frame(t(L)))
-  } else if(is.list(L)){
-    ignore <- 0
-  } else {
-    stop("first argument must be a list or a matrix")
-  }
-  return(hyper2(L,d,pnames))
+    if(is.matrix(L)){
+        L <- as.list(as.data.frame(t(L)))
+    } else if(is.hyper3(L)){
+        return(hyper3_to_hyper2(L))
+    } else if(is.list(L)){
+        ignore <- 0
+    } else {
+        stop("first argument must be a list or a matrix")
+    }
+    return(hyper2(L,d,pnames))
 }
 
 `.print.helper` <- function(cv){  # Character vector
@@ -168,7 +172,14 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
   } else {
     stop("length(p) must be either size(H) or size(H)-1")
   }
-  out <- evaluate(brackets(H), powers(H), probs=probs, pnames=pnames(H))
+  if(is.hyper2(H)){
+      out <- evaluate(brackets(H), powers(H), probs=probs, pnames=pnames(H))
+  } else if(is.hyper3(H)){
+      out <- evaluate3(brackets(H), weights(H),powers(H), probs=probs, pnames=pnames(H))
+  } else {
+      stop("H must be a hyper2 or hyper3 object")
+  }
+
   if(log){
     return(out)
   } else {
@@ -337,7 +348,11 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     } else {
         stop("probs is wrong length")
     }
-    differentiate(brackets(H), powers(H), jj, pnames(H), size(H))$grad_comp
+    if(is.hyper2(H)){
+        return(differentiate(brackets(H), powers(H), jj, pnames(H), size(H))$grad_comp)
+    } else {
+        return(differentiate3(brackets(H), weights(H), powers(H), jj, pnames(H), size(H))$grad_comp)
+    }
 }
 
 `gradientn` <- function(H,probs=maxp(H)){
@@ -415,6 +430,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 
 `maxp_single` <- function(H, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6, maxtry=100, ...){
     if(inherits(H,"suplist")){return(maxplist(Hlist=H,startp=startp,give=give,fcm=fcm,fcv=fcv,...))}
+    if(inherits(H,"lsl"    )){return(maxp_lsl(Hlist=H,startp=startp,give=give,fcm=fcm,fcv=fcv,...))}
     
     n <- size(H)
     if(is.null(startp)){
@@ -564,6 +580,39 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     }
     else {
         jj <- fillup(out$par)
+        return(jj)
+    }
+}
+
+`maxp_lsl` <- function (HLSL, startp = NULL, give = FALSE, fcm = NULL, fcv = NULL, SMALL=1e-6, ...){
+    allpnames <- pnames(HLSL[[1]][[1]])
+    n <- length(allpnames)
+
+    if (is.null(startp)) {
+        startp <- rep(1/n, n)
+	names(startp) <- allpnames
+        startp <- indep(startp)
+    }
+    
+    objective <- function(p) { -loglik_lsl(p, HLSL) }
+    
+    UI <- rbind(diag(nrow = n - 1), -1, fcm)
+    CI <- c(rep(SMALL, n - 1), -1 + SMALL, fcv)
+    
+    if(isTRUE(getOption("use_alabama"))){
+        out <- constrOptim.nl(par = startp, fn = objective, gr = NULL, 
+                              hin = function(x){drop(UI%*%x - CI)},
+                              control.outer = list(trace=FALSE),...)
+    } else {
+        out <- constrOptim(theta=startp,f=objective,grad = NULL,ui=UI,ci=CI,...)
+    }
+    out$value <- -out$value
+    if (give) {
+        return(out)
+    }
+    else {
+        jj <- fillup(out$par)
+        names(jj) <- allpnames
         return(jj)
     }
 }
@@ -748,16 +797,22 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
   ggrl(H,winners,losers)
 }
 
+
+`goodbad` <- function(winners,losers){
+    stopifnot(!any(winners %in% losers))
+    ggrl(hyper2(pnames=c(winners,losers),winners,losers))
+}
+
 `elimination` <- function(all_players){
     if(is.numeric(all_players) & (length(all_players)==1)){
       all_players <- letters[seq_len(all_players)]
     }
     all_players <- rev(all_players)
-    H <- choose_losers(hyper2(pnames=sort(all_players)),all_players,all_players[length(all_players)])
+    H <- ggrl(hyper2(pnames=sort(all_players)),all_players,all_players[length(all_players)])
     players <- all_players[-length(all_players)]
     while(length(players)>1){
         for(i in seq_along(H)){
-            H[[i]] <- choose_losers(H[[i]],players,players[length(players)])
+            H[[i]] <- ggrl(H[[i]],players,players[length(players)])
         }
         H <- unlist(H,recursive=FALSE)
         players <- players[-length(players)]
@@ -1085,7 +1140,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     if(missing(players)){
       return(x[order(names(x))])
     } else {
-      if(is.hyper2(players)){
+      if(is.hyper2(players) | is.hyper3(players)){
         players <- pnames(players)
       }
     }
@@ -1096,13 +1151,13 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     x[apply(outer(players,names(x),`==`),1,which)]
 }
 
-`ordertransplot` <- function(ox,oy, ...){
+`ordertransplot` <- function(ox,oy, plotlims, ...){
   stopifnot(all(sort(names(ox))==sort(names(oy))))
   ox <- ordertrans(ox)
   oy <- ordertrans(oy)
   par(pty='s') # square plot
-  jj <- c(0,max(c(ox,oy)))
-  plot(ox,oy,asp=1,pty='s',xlim=jj,ylim=jj,pch=16,...)
+  if(missing(plotlims)){plotlims <- c(0,max(c(ox,oy)))}
+  plot(ox,oy,asp=1,pty='s',xlim=plotlims,ylim=plotlims,pch=16,...)
   abline(0,1)
   for(i in seq_along(ox)){text(ox[i],oy[i],names(ox)[i],pos=4,col='gray',cex=0.7)}
 }
@@ -1165,4 +1220,39 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     index <- which(upper.tri(M),arr.ind=TRUE)
     dirichlet(rowSums(M)) - hyper2(apply(index,1,function(x){rownames(M)[x]},simplify=FALSE),jj[index])
 }
+
+`home_away` <- function(home_games_won,away_games_won){
+    if(is.complex(home_games_won)){
+        away_games_won <- Im(home_games_won)
+        home_games_won <- Re(home_games_won) # note, away_games_won is assigned first
+    }
+    teams <- rownames(home_games_won)
+    stopifnot(identical(teams,colnames(home_games_won)))
+    stopifnot(identical(teams,rownames(away_games_won)))
+    stopifnot(identical(teams,colnames(away_games_won)))
+    teams <- c(teams,"home")
+    
+    H <- hyper2(pnames=teams)
+
+    for(i in seq_len(nrow(home_games_won))){
+        for(j in seq_len(ncol(home_games_won))){
+            if(i != j){  # diagonal means a team plays itself, meaningless.
+                ## First deal with home_games:
+                game_winner <- teams[i]
+                game_loser  <- teams[j]
+                no_of_matches <- home_games_won[i,j] # won with home strength helping
+                H[c(game_winner,           "home")] %<>% inc(no_of_matches)  # won with home strength helping
+                H[c(game_winner,game_loser,"home")] %<>% dec(no_of_matches)
+
+                ## now away games:
+                no_of_matches <- away_games_won[i,j] # won without the benefit of home strength
+                H[c(game_winner                  )] %<>% inc(no_of_matches)  # won without home ground helping...
+                H[c(game_winner,game_loser,"home")] %<>% dec(no_of_matches)  # home strength nevertheless on denominator
+                                
+            } # if(i != j) closes
+        } # j loop closes
+    } # i loop closes
+    return(H)
+}
+
 

@@ -8,22 +8,22 @@ order.
 }
 \usage{
 ordertrans(x,players)
-ordertransplot(ox,oy,...)
+ordertransplot(ox,oy,plotlims, ...)
 }
 \arguments{
   \item{x}{A (generalized) order vector}
   \item{players}{A character vector specifying the order in which the
     players will be listed; if missing, use \code{sort(names(x))}}
   \item{ox,oy}{Rank vectors}
+  \item{plotlims}{Length two numeric vector giving x and y plot limits.
+    If missing, use sensible default}
   \item{...}{Further arguments, passed to \code{plot()}}
 }
-
 \details{
   
   The best way to describe this function is with an example:
 
   \preformatted{
-
 > x <- c(d=2,a=3,b=1,c=4)
 > x
 d a b c 
@@ -65,6 +65,24 @@ further discussion and examples.
 Function \code{ordertrans()} takes a second argument which allows the
 user to arrange an order vector into the order specified.
 
+Function \code{ordertrans()} also works in the context of \code{hyper3}
+objects:
+
+\preformatted{
+x <- c(d=2,a=3,b=1,a=4)
+x
+d a b a 
+2 3 1 4 
+ordertrans(x)
+a a b d 
+3 4 1 2 
+}
+  
+Object \code{x} shows that \code{d} came second, \code{a} came third and
+fourth, and \code{b} came first.  We can see that \code{ordertrans()}
+gives the same information in a more intelligible format.  This
+functionality is useful in the context of \code{hyper3} likelihood
+functions.
 }
 \value{Returns a named vector}
 \author{Robin K. S. Hankin}
@@ -85,12 +103,13 @@ user to arrange an order vector into the order specified.
 \examples{
 
 x <- c(e=4L,a=7L,c=6L,b=1L,f=2L,g=3L,h=5L,i=8L,d=9L)
+x
 ordertrans(x,letters[1:9])
 
 o <- skating_table[,1]
 names(o) <- rownames(skating_table)
+o
 ordertrans(o)
-
 
 ordertrans(sample(icons_maxp),icons)
 
@@ -103,5 +122,3 @@ names(r1) <- rownames(volvo_table)
 ordertransplot(rL,r1,xlab="likelihood rank, all races",ylab="rank, race 1")
 
 }
-
-

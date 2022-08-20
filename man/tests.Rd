@@ -48,7 +48,7 @@ specificp.lt.test(H, i, specificp=1/size(H), ...)
 \details{
 
   Given a \code{hyper2} likelihood function, there are a number of
-  natural questions to ask about the strengths of the players; see the
+  natural questions to ask about the strengths of the players; see
   Hankin 2010 (JSS) for examples.  An extended discussion is presented
   in vignette \dQuote{\code{hyper2}} and the functions documented here
   cover most of the tests used in the vignette.
@@ -70,7 +70,8 @@ specificp.lt.test(H, i, specificp=1/size(H), ...)
   \code{specificp.test(icons,"NB",0.1)}
   \item Function \code{samep.test()} tests \mjeqn{H_0\colon
   p_{i_1}=p_{i_2}=\cdots=p_{i_k}}{omitted}, for example
-  \code{samep.test(icons,c("NB","L"))}
+  \code{samep.test(icons,c("NB","L"))} tests that \code{NB} has the same
+  strength as \code{L}. 
   \item Functions \code{specificp.ne.test(H,i,p)},
   \code{specificp.gt.test(H,i,p)}, and \code{specificp.lt.test(H,i,p)}
   are low-level helper functions that implement one- or two-sided versions
