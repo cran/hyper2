@@ -6,7 +6,7 @@
 \alias{white_draw}
 \alias{white_draw3}
 \title{Pairwise comparisons}
-\description{\loadmathjax
+\description{
 
   Function \code{pairwise()} takes a matrix of pairwise comparisons and
   returns a \code{hyper2} likelihood function.  Function
@@ -24,8 +24,8 @@
   Function \code{white_draw3()} returns a \code{hyper3} likelihood
   function for pairwise comparisons, one of whom has a home team-type
   advantage (white player in the case of chess).  It is designed to
-  work with an array of dimensions \mjeqn{n\times n\times 3}{n*n*3},
-  where \mjseqn{n} is the number of players.  It is used in
+  work with an array of dimensions \eqn{n\times n\times 3}{n*n*3},
+  where \eqn{n} is the number of players.  It is used in
   \code{inst/kka.Rmd} to create \code{chess3} likelihood function.
       
 }
@@ -70,6 +70,10 @@ number 1, pages 384--406
 \item S. Borozki and others 2016.  \dQuote{An application of incomplete pairwise
   comparison matrices for ranking top tennis
   players}. \code{arXiv:1611.00538v1} \code{10.1016/j.ejor.2015.06.069}
+
+\item R. R. Davidson and R. J. Beaver 1977. \dQuote{On extending the
+  Bradley-Terry model to incorporate within-pair order effects}.
+  \emph{Biometrics}, 33:693--702
 }
 }
 \author{Robin K. S. Hankin}
@@ -78,7 +82,7 @@ number 1, pages 384--406
 An extended discussion of \code{pairwise()} is given in
 \code{inst/zermelo.Rmd} and also \code{inst/karate.Rmd}.  Functions
 \code{home_away()} and \code{home_away3()} are described and used in
-\code{inst/home_advantage.Rmd}.
+\code{inst/home_advantage.Rmd}; see Davidson and Beaver 1977.
 
 }
 \seealso{\code{\link{maxp}}}
@@ -112,4 +116,5 @@ M <- kka_array[,,1] + 1i*kka_array[,,3] # ignore draws
 home_away(M)
 # home_away3(M,lambda=1.3)  # works but takes too long (~3s)
 
+white_draw3(kka_array,1.88,1.11)
 }

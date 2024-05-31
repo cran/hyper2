@@ -1,0 +1,249 @@
+---
+title: "The `ordertrans()` function in the `hyper2` package"
+author: "Robin K. S. Hankin"
+output:
+  bookdown::html_document2:
+      base_format: rmarkdown::html_vignette
+bibliography: hyper2.bib
+vignette: >
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteIndexEntry{ordertrans}
+  %\usepackage[utf8]{inputenc}
+---
+
+```{r setup, include=FALSE}
+set.seed(0)
+library("hyper2")
+options(rmarkdown.html_vignette.check_title = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(fig.width=6, fig.height=6)
+knit_print.function <- function(x, ...){dput(x)}
+registerS3method(
+  "knit_print", "function", knit_print.function,
+  envir = asNamespace("knitr")
+)
+```
+
+```{r out.width='20%', out.extra='style="float:right; padding:10px"',echo=FALSE}
+knitr::include_graphics(system.file("help/figures/hyper2.png", package = "hyper2"))
+```
+
+```{r, label=showordertrans}
+ordertrans
+```
+
+To cite the `hyper2` package in publications, please use
+@hankin2017_rmd.  The `ordertrans()` function can be difficult to
+understand and this short document provides some sensible use-cases.
+The manpage provides a very simple example, but here we are going to
+use an even simpler example:
+
+
+```{r,label=simpexample}
+x <- c(d=2,a=3,b=1,c=4)
+x
+```
+
+In the above, object `x` is a named vector with elements
+`seq_along(x)` in some order.  It means that competitor `d` came
+second, competitor `a` came third, `b` came first and `c` came fourth.
+Technically `x` is an order vector because it answers the question
+"where did a particular competitor come?"  However, it might equally
+be a rank vector because it answers the question "who came first? who
+came second?"  (see also the discussion at `rrank.Rd`).
+
+But note that `x` is not helpfully structured to answer either of
+these questions: you have to go searching through the names or the
+ranks respectively---both of which may appear in any order---to find
+the competitor or rank you are interested in.  To find the rank vector
+(that is, who came first, second etc), one would use `sort()`:
+
+```{r}
+sort(x)
+```
+
+But this is suboptimal to find the order vector ["where did a
+particular competitor come?"].  For the order vector, we want to
+rearrange the elements of `x` so that the names are in alphabetical
+order.  That way we can see straightaway where competitor `a` placed
+(in this case, third).  This nontrivial task is accomplished by
+function `ordertrans()`:
+
+
+```{r,label=useordertrans}
+o <- ordertrans(x) # by default, sorts names() into alphabetical order
+o
+```
+
+Observe that objects `x` and `o` are equal in the sense that they are
+a rearrangement of one another:
+
+```{r,label=equalrearrangement}
+identical(x, o[c(4,1,2,3)])
+identical(o, x[c(2,3,4,1)])
+```
+
+One consequence of this is that the resulting Plackett-Luce support
+functions will be the same:
+
+```{r,showordervec}
+(Sx <- ordervec2supp(x))
+(So <- ordervec2supp(o))
+```
+
+Note carefully that the two support functions above can be
+mathematically identical but not formally `identical()` because
+neither the order of the brackets, nor the order of terms within a
+bracket, is defined.  They look the same on my system but YMMV.  It is
+possible that the two support functions might appear to be different
+even though they are mathematically the same. We can verify that the
+two are mathematically identical using package idiom `==`:
+
+```{r}
+Sx==So
+```
+
+## Another use-case
+
+How about this:
+
+```{r}
+(x <- c(d=2, a=3, c=4, b=3, e=6))
+(y <- c(e=3, c=2, a=4, b=5, d=1))
+x+y
+```
+
+Above, observe that R is behaving as intended $\ldots$ but is
+potentially confusing.  Take the first element.  This has value
+`2+5=7` and name `d` from the name of element 1 of `x`.  But it would
+be reasonable to ask for the first element to be the sum of element
+`d` of `x` and element `d` of `y`, which would be `2+1=3`.
+This can be done with `ordertrans()`:
+
+```{r}
+ordertrans(x) + ordertrans(y)
+```
+
+See how `ordertrans()` has rearranged both `x` and `y` so that the
+names are in alphabetical order.
+
+But this is not perfect.  Consider:
+
+```{r}
+(z <- c(f=3, g=2, h=4, a=5, b=1))  # names NOT letters[1:5]
+ordertrans(x) + ordertrans(z)  # arguably not well-defined
+```
+
+In this case the result is arguably incorrect.
+
+
+
+
+## Skating
+
+Let us consider the skating dataset and use `ordertrans()` to study it
+(note that the skating dataset is analysed in more depth in
+`skating.Rmd`).
+
+```{r,label=lookatskating}
+skating_table
+```
+
+We might ask how judges `J1` and `J2` compare to one another?  We need to
+create vectors like `x` and `y` above:
+
+```{r,makej1j2}
+j1 <- skating_table[,1]  # column 1 is judge number 1
+names(j1) <- rownames(skating_table)
+j2 <- skating_table[,2]  # column 2 is judge number 2
+names(j2) <- rownames(skating_table)
+j1
+j2
+cbind(j1,j2)
+```
+
+In the above, see how objects `j1` and `j2` have identical names, in
+the same order.  Observe that `hughes` is ranked 1 (that is, first) by
+`J1`, and 4 (that is, 4th) by `J2`.  This makes it sensible to plot
+`j1` against `j2`:
+
+```{r j1vsj2,fig.cap="Judge 1 vs judge 2"}
+par(pty='s')  # forces plot to be square
+plot(j1,j2,asp=1,pty='s',xlim=c(0,25),ylim=c(0,25),pch=16,xlab='judge 1',ylab='judge 2')
+abline(0,1)  # diagonal line
+for(i in seq_along(j1)){text(j1[i],j2[i],names(j1)[i],pos=4,col='gray',cex=0.7)}
+```
+
+In figure \@ref(fig:j1vsj2), we see general agreement but differences
+in detail.  For example, `hughes` is ranked first by judge 1 and
+fourth by judge 2.  However, other problems are not so easy.  Suppose
+we wish to compare the ranks according to likelihood with the ranks
+according to some points system.
+
+```{r,label=maxlikeskating,cache=TRUE}
+mL <- skating_maxp  # predefined; use maxp(skating) to calculate ab initio
+mL
+```
+
+Note that in the above, the competitors' names are in alphabetical
+order.  We first need to convert strengths to ranks:
+
+```{r,label=strengthstoranks}
+mL[] <- rank(-mL)  # minus because ranks orders from weak to strong
+mL
+```
+
+(note that the names are in the same order as before, alphabetical).
+In the above we see that `slutskya` ranks first, `hughes` second, and
+so on.  Another way of ranking the skaters is to use a Borda-type
+system: essentially the rowsums of the table (and, of course, the
+_lowest_ score wins):
+
+
+```{r,label=pointsskating,cache=TRUE}
+mP <- rowSums(skating_table)  # 'P' for Points
+mP[] <- rank(mP,ties='first') # positive sign here
+mP
+```
+
+It is not at all obvious how to compare `mP` and `mL`.  For example,
+we might be interested in `hegel`.  It takes some effort to find that
+her likelihood rank is 20 and her Borda rank is 19.  Function
+`ordertrans()` facilitates this:
+
+
+```{r,label=ordertransexample}
+ordertrans(mP,names(mL))  
+```
+
+See above how `ordertrans()` shows the points-based ranks but in
+alphabetical order, to facilitate comparison with `mL`.  We can now
+plot these against one another:
+
+```{r,label=crapplot,fig.cap="points-based ranks vs likelihood ranks"}
+plot(mL,ordertrans(mP,names(mL)))
+```
+
+However, figure \@ref(fig:crapplot) is a bit crude.  Function
+`ordertransplot()` gives a more visually pleasing output, see figure
+\@ref(fig:showoffordertransplot).
+
+
+```{r,label=showoffordertransplot,fig.cap="points=based rank vs likelihood rank using `ordertransplot()`"}
+ordertransplot(mL,mP,xlab="likelihood rank",ylab="Borda rank")
+```
+
+So now we may compare judge 1 against likelihood:
+
+
+```{r transplotjudge1,fig.cap="Likelihood rank vs rank according to Judge 1"}
+ordertransplot(mL,j1,xlab="likelihood rank",ylab="Judge 1 rank")
+```
+
+In figure \@ref(fig:transplotjudge1), looking at the lower-left
+corner, we see (reading horizontally) that the likelihood method
+placed Slutskya first, then Hughes second, then Kwan third; while
+(reading vertically) judge 1 placed Hughes first, then Kwan, then
+Slutskya.
+
+# References

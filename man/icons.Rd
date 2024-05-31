@@ -22,6 +22,10 @@
 
   Object \code{icons} is the corresponding likelihood function, which
   can be created with \code{saffy(icons_matrix)}.
+
+  The object is used in \code{inst/ternaryplot_hyper2.Rmd} which shows a
+  ternary plot of random samples.
+  
 }
 \usage{data(icons)}
 \details{
@@ -45,10 +49,9 @@
 }
 \references{
   \itemize{
-    \item
-    S. O'Neill 2007. \emph{An Iconic Approach to Communicating
-      Climate Change}, University of East Anglia,  School of Environmental
-    Science (in prep)
+    \item S. J. O'Neill and M. Hulme 2009. \emph{An iconic approach for
+    representing climate change}.  Global Environmental Change,
+    19:402-410
     \item I. Lorenzoni and N. Pidgeon 2005. \emph{Defining Dangers of
       Climate Change and Individual Behaviour: Closing the Gap}. 
     In  \emph{Avoiding Dangerous Climate Change} (conference

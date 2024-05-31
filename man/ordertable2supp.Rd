@@ -3,8 +3,9 @@
 \alias{ordervec2supp}
 \alias{ordervec2supp}
 \alias{order_obs}
+\alias{salad}
 \title{Translate order tables to support functions}
-\description{\loadmathjax
+\description{
 
 Wikipedia gives a nice summary in table form of Formula 1 racing results
 on pages like
@@ -28,8 +29,10 @@ ordervec2supp(d)
     interpreted as that competitor coming last (due to, e.g., not
     finishing)}
   \item{incomplete}{Boolean, with \code{FALSE} meaning to insist that
-    each rank \eqn{1,2,...,n} is present [zero meaning did not place]
-    and default \code{TRUE} allowing for gaps.  See examples.}
+    each rank \eqn{1,2,...,n} is present [zero entries mean \dQuote{did
+    not place} irregardless].  The default \code{TRUE} allows for gaps.
+    This is useful if we are considering the first few lines of an
+    ordertable because there might be missing ranks.}
   \item{noscore}{Character vector giving the abbreviations
     for a non-finishing status such as \dQuote{did not finish}
     or \dQuote{disqualified}.  A missing argument is interpreted as 
@@ -58,12 +61,26 @@ log( a * (a + b + c + d + e)^-1 * (a + b + d + e)^-1 * b * (b + d +
 e)^-1 * c * (d + e)^-1 * e)
 }
 
-\mjdeqn{
+\deqn{
 \frac{a}{a+b+c+d+e}\cdot
 \frac{b}{b+c+d+e}\cdot
 \frac{c}{c+d+e}\cdot
 \frac{d}{d+e}\cdot
 \frac{e}{e}
+}{
+  omitted
+}
+
+Zero entries mean \dQuote{did not finish}:
+
+\preformatted{
+> ordervec2supp(c(b=1,a=0,c=2))  # b: 1st, a: DNF, c: second
+log((a + b + c)^-1 * (a + c)^-1 * b * c)
+  }
+
+\deqn{
+\frac{b}{a+b+c}\cdot
+\frac{c}{a+c}
 }{
   omitted
 }
@@ -83,15 +100,41 @@ e)^-1 * d * (d + e)^-1)
 }
 
 Function \code{order_obs()} was used in the integer-indexed paradigm but
-is obsolete in the name paradigm.
+is obsolete in the name paradigm.  A short vignette applying
+\code{ordervec2supp()} and \code{ordertable2supp()} to the \link{salad}
+dataset of the \CRANpkg{prefmod} package [and further analysed in the
+\CRANpkg{PlackettLuce} package] is presented at \code{inst/salad.Rmd}.
+
+
 }
 
 \value{Returns a \code{hyper2} object}
 \author{Robin K. S. Hankin}
-\seealso{\code{\link{ordertable}}}
+\seealso{\code{\link{ordertable}},\code{\link{ordertable2supp3}}}
 \examples{
 ordertable2supp(soling_table)
 
+# competitors a-f, racing at two venues:
+x <- data.frame(
+    venue1=c(1:5,"Ret"),venue2=c("Ret",4,"Ret",1,3,2),
+    row.names=letters[1:6])
+
+## First consider all competitors; incomplete=FALSE checks that all
+## finishing competitors have ranks 1-n in some order for some n:
+
+ordertable2supp(x,incomplete=FALSE)
+
+
+## Now consider just a-d; must use default incomplete=TRUE as at venue2
+## the second and third ranked competitors are not present in x[1:4,]:
+
+ordertable2supp(x[1:4,])   
+
+
+
+
+
+## Function ordervec2supp() is lower-level, used for order vectors:
 
 a1 <- c(a=2,b=3,c=1,d=5,e=4) # a: 2nd, b: 3rd, c: 1st, d: 5th, e: 4th
 a2 <- c(a=1,b=0,c=0,d=2,e=3) # a: 2nd, b: DNF, c: DNF, d: 2nd, e: 3rd
@@ -99,7 +142,8 @@ a3 <- c(a=1,b=3,c=2)         # a: 1st, b: 3rd, c: 2nd. NB only a,b,c competed
 a4 <- c(a=1,b=3,c=2,d=0,e=0) # a: 1st, b: 3rd, c: 2nd, d,e: DNF
 
 
-## ordervec2supp() may be added [if the observations are independent]:
+## results of ordervec2supp() may be added with "+" [if the observations
+## are independent]:
 
 H1 <- ordervec2supp(a1) + ordervec2supp(a2) + ordervec2supp(a3)
 H2 <- ordervec2supp(a1) + ordervec2supp(a2) + ordervec2supp(a4)

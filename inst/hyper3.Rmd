@@ -1,26 +1,28 @@
 ---
-title: "The Weighted dirichlet distribution"
-author: "Robin K. S. Hankin"
-date: "`r Sys.Date()`"
-vignette: |
-  %\VignetteIndexEntry{hyper3}
-  %\VignetteEncoding{UTF-8}
-  %\VignetteEngine{knitr::rmarkdown}
+title: "The weighted hyperdirichlet distribution: the `hyper3` class"
+author: "R. K. S. Hankin"
+output: bookdown::html_document2
+bibliography: hyper2.bib  # copy vignettes/hyper2.bib to inst/
 ---
 
-
-```{r}
-library("hyper2",quietly=TRUE)
+```{r setup, include=FALSE}
+set.seed(1)
+knitr::opts_chunk$set(echo = TRUE)
+library("hyper2")
 ```
 
+```{r out.width='20%', out.extra='style="float:right; padding:10px"',echo=FALSE}
+knitr::include_graphics(system.file("help/figures/hyper2.png", package = "hyper2"))
+```
 
-Objects of class \code{hyper3} are a generalization of \code{hyper2}
+To cite the `hyper2` package in publications, please use @hankin2017_rmd.
+Objects of class `hyper3` are a generalization of `hyper2`
 objects that allow the brackets to contain weighted probabilities.
-Likelihood functions are defined on non-negative $p_1,\ldots p_n$
+Likelihood functions are defined on non-negative numbers $p_1,\ldots, p_n$
 subject to the unit-sum constraint $\sum p_i=1$.  Given known weights
 $w^i_j$ with $1\leq i\leq j$ we have
 
-$$\mathcal{L}\left(p_1,\ldots p_n\right)=\prod_j\left(\sum_{i=1}^n w^i_jp_i\right)^{n_j}.$$
+$$\mathcal{L}\left(p_1,\ldots, p_n\right)=\prod_j\left(\sum_{i=1}^n w^i_jp_i\right)^{n_j}.$$
 
 As a motivating example, suppose two teams (players) with
 Bradley-Terry strengths $p_1,p_2$ play football where we quantify the
@@ -29,18 +31,29 @@ $a+b$ times with $a$ wins and $b$ losses, and plays away [so $p_2$ is
 at home] $c+d$ times with $c$ wins and $d$ losses, then a sensible
 likelihood function might be
 
-$$
-\left(\frac{\lambda p_1}{\lambda p_1 + p_2}\right)^{A}
-\left(\frac{p_2        }{\lambda p_1 + p_2}\right)^{B}
-\left(\frac{p_1        }{p_1 + \lambda p_2}\right)^{C}
-\left(\frac{\lambda p_2}{p_1 + \lambda p_2}\right)^{D}.
+$$\mathcal{L}(p_1,p_2,\lambda;a,b,c,d)=
+\left(\frac{\lambda p_1}{\lambda p_1 + p_2}\right)^{a}
+\left(\frac{p_2        }{\lambda p_1 + p_2}\right)^{b}
+\left(\frac{p_1        }{p_1 + \lambda p_2}\right)^{c}
+\left(\frac{\lambda p_2}{p_1 + \lambda p_2}\right)^{d}.
 $$
 
-If $A=6,B=2,C=5,D=1$ and $\lambda=1.3$ [assumed for the moment to be
+where we understand that $p_1+p_2=1$, $p_1,p_2,\lambda\geqslant 0$.
+Elementary techniques allow us to identify a maximum and we find
+
+$$
+\hat{p_1}=\frac{\sqrt{ac}}{\sqrt{ac}+\sqrt{bd}}\qquad
+\hat{p_2}=\frac{\sqrt{bd}}{\sqrt{ac}+\sqrt{bd}}\qquad
+\hat{\lambda}=\sqrt{\frac{ad}{bc}}
+$$
+Likelihoods of this form are easily specified using package idiom.
+
+If $a=6,b=2,c=7,d=1$ and $\lambda=1.3$ [assumed for the moment to be
 known], appropriate package idiom might be:
 
 ```{r,label=usenamedvectorsforH}
-A <- 6 ; B <- 2 ; C <- 7 ; D <- 1
+library("hyper2",quietly=TRUE)
+A <- 6 ; B <- 2 ; C <- 7 ; D <- 1 # upper-case to avoid conflicts
 H <- hyper3()
 H[c(p1=1.3)]      %<>% inc(A) 
 H[c(p2=1)]        %<>% inc(B) 
@@ -51,8 +64,25 @@ H[c(p1=1,p2=1.3)] %<>% dec(C+D)
 H
 ```
 
-We may estimate $p_1$ and $p_2$ using maximum likelihood, `maxp()` in
-package idiom:
+Bespoke function `home_away3()` achieves the same result with a more
+convenient input:
+
+```{r,label=usehomeaway3}
+M <- matrix(c(NA, 6+2i ,1+7i, NA),2,2,byrow=TRUE)
+teams <- c("p1","p2")
+dimnames(M) <- list("@home" = teams,"@away"=teams)
+dimnames(M) <- list("@home" = teams,"@away"=teams)
+print(M)
+home_away3(M,lambda=1.3)
+```
+
+
+Above, object `M` is a $2\times 2$ complex matrix, with real parts being home
+wins and imaginary parts being away wins.  See how `home_away3(M)` returns the
+same likelihood function as the explicit calculation performed by hand
+previously.  Now, we can calculate maximum likelihood estimates
+$\hat{p_1},\hat{p_2}$ of $p_1$ and $p_2$ using numerical optimization
+techniques, `maxp()` in package idiom:
 
 ```{r,label=findtheevaluate,cache=TRUE}
 maxp(H)
@@ -71,7 +101,7 @@ assert that the players do in fact differ in strength.
 Another motivating example might come from Plackett-Luce likelihood
 functions for order statistics.  Suppose we have three players with
 nonnegative strengths $p_\mathrm{M},p_\mathrm{RB},p_\mathrm{F}$, with
-unit sum.  These players might be conceputalised as F1 constructors
+unit sum.  These players might be conceptualised as F1 constructors
 (here Mercedes (M), Red Bull (RB), and Ferrari (F) for the sake of
 argument).  Each constructor fields two cars and the order statistic
 might be
@@ -137,7 +167,16 @@ b["R"] %<>% inc ; b[c(                "R","M")] %<>% dec
 a==b
 ```
 
+However, bespoke function `ordervec2supp3()` performs all this in one
+step:
+
+```{r, label=showbespoke}
+ordervec2supp3(c("RB","M","F","F","RB","M"))
+```
+
+
 And then
+
 
 ```{r, label=maxpa,cache=TRUE}
 ma <- maxp(a)
@@ -157,3 +196,4 @@ gradient(a,ma)  # should be small at the evaluate
 ```
 
 
+## References {-}

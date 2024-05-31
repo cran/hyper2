@@ -1,5 +1,3 @@
-
-
 `hyper2` <-  function(L=list(), d=0, pnames){
   if(length(d)==1){d <- rep(d,length(L))}
   if(missing(pnames)){pnames <- sort(unique(c(L,recursive=TRUE)))}
@@ -159,6 +157,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 }
 
 `loglik_single` <- function(p,H,log=TRUE){
+  stopifnot(sum(powers(H))==0)
   stopifnot(all(p>=0))
   if(length(p) == size(H)-1){
     stopifnot(sum(p)<=1)
@@ -217,11 +216,11 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
   rclass <- !unary && inherits(e2,"hyper2")
   
   if(unary){
-    stop("Unary operator '", .Generic, "' is not implemented for hyper2 objects")
+    stop("unary operator '", .Generic, "' is not implemented for hyper2 objects")
     }
 
-  if (!is.element(.Generic, c("+", "-", "==", "!=", "*", "^" ))){
-    stop("Binary operator '", .Generic, "' is not implemented for hyper2 objects")
+  if (!is.element(.Generic, c("+", "-", "==", "!=", "*"))){
+    stop("binary operator '", .Generic, "' is not implemented for hyper2 objects")
   }
   
   if(lclass && rclass){  
@@ -322,7 +321,9 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 }
 
 `[<-.hyper2` <- function(x, index, ..., value){
-    if(missing(index)){  # A[] <- B
+    if(inherits(value,"weight")){
+        out <- setweight(as.hyper3(x),index,value)
+    } else if(missing(index)){  # A[] <- B
         jj <- overwrite_lowlevel(x,value)
         if(all(pnames(value) %in% pnames(x))){
             out <- hyper2(jj[[1]],jj[[2]],pnames=pnames(x))
@@ -386,12 +387,15 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     if(give){return(jj)} else {return(all((jj>0) == alt))}
 }
 
-`fillup` <- function(x,total=1){
+`fillup` <- function(x,H=NULL,total=1){
   if(is.matrix(x)){
-    return(cbind(x,total-rowSums(x)))
+    out <- cbind(x,total-rowSums(x))
+    if(!is.null(H)){colnames(out) <- pnames(H)}
   } else {  # assumed to be a vector
-    return(c(x,total-sum(x)))
+    out <- c(x,total-sum(x))
+    if(!is.null(H)){names(out) <- pnames(H)}
   }
+  return(out)
 }
 
 `indep` <- function(x){
@@ -402,12 +406,12 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
   }
 }
 
-`maxp` <- function(H, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6, n=10, show=FALSE, justlikes=FALSE, ...){
+`maxp` <- function(H, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6, n=1, show=FALSE, justlikes=FALSE, ...){
     if(isTRUE(getOption("use_alabama"))){ms <- maxp_single2} else {ms <- maxp_single}
     best_so_far <- -Inf # best (i.e. highest) likelihood found to date
     likes <- rep(NA,n)
     if(is.null(startp)){ startp <- indep(equalp(H)) }
-
+    if(length(startp) == size(H)){startp <- indep(startp)}
     for(i in seq_len(n)){
         if(i>1){startp <- startp+runif(size(H)-1,max=SMALL/size(H))}
         jj <- ms(H, startp=startp, give=TRUE, fcm=fcm, fcv=fcv, SMALL=SMALL, ...)
@@ -420,11 +424,9 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     }  # i loop closes
     if(justlikes){ return(likes) }
     if(give){
-        return(c(out,likes=list(likes)))
+        return(c(out,likes=list(likes),evaluate=list(fillup(out$par,H))))
     } else {
-        out <- fillup(out$par)
-        if(!identical(pnames(H),NA)){names(out) <- pnames(H)}
-        return(out)
+      return(fillup(out$par,H))
     }
 }  # maxp() closes
 
@@ -432,6 +434,8 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     if(inherits(H,"suplist")){return(maxplist(Hlist=H,startp=startp,give=give,fcm=fcm,fcv=fcv,...))}
     if(inherits(H,"lsl"    )){return(maxp_lsl(Hlist=H,startp=startp,give=give,fcm=fcm,fcv=fcv,...))}
     
+    if(length(startp) == size(H)){startp <- indep(startp)}
+
     n <- size(H)
     if(is.null(startp)){
         startp <- rep(1/n,n-1)
@@ -500,6 +504,8 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     if(is.null(startp)){
         startp <- rep(1/n,n-1)
     }
+
+    if(length(startp) == size(H)){startp <- indep(startp)}
 
     objective <- function(p){ -loglik(p,H) }
     gradfun   <- function(p){ -(gradient(H,p))} #NB minus signs
@@ -671,7 +677,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 #     return(H)
 # }
 
-`.rrank_single` <- function(p){
+`rrank_single` <- function(p){
     ell <- length(p)
     r <- integer(ell)
     i <- 1   # 'i' means placing.
@@ -684,10 +690,16 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     return(r)
 }
 
+rorder_single <- function(p){
+    o <- rrank_single(p)
+    o[o] <- seq_along(o)
+    return(o)
+}
+
 `rrank` <- function(n=1, p, pnames=NULL, fill=FALSE, rnames=NULL){
     if(fill){ p <- fillup(p) }
     if(is.null(pnames)){pnames <- names(p)}
-    out <- t(replicate(n, .rrank_single(p)))
+    out <- t(replicate(n, rrank_single(p)))
     colnames(out) <- pnames
     rownames(out) <- rnames
     class(out) <- "ranktable"
@@ -841,9 +853,9 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
         powers <- alpha-1
     }
 
-    if(is.null(names(powers))){stop("supply a named vector")}
-    
-    hyper2(as.list(names(powers)),d=powers)
+    np <- names(powers)
+    if(is.null(np)){stop("supply a named vector")}
+    hyper2(as.list(np),d=powers) - hyper2(list(np),d=sum(powers))
 }
 
 `GD` <- function(alpha, beta, beta0=0){
@@ -993,9 +1005,42 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     return(out)
 }
 
+
+`complete` <- function(a,noscore=NULL,check=FALSE){
+  if(is.null(noscore)){
+    noscore <- c("Ret", "WD", "DNS", "DSQ", "DNP", "NC", "DNQ", "EX", "Sick")
+  }
+  
+  out <- apply(a,2,
+               function(v){
+                 v[v %in% noscore] <- "0"
+                 v <- as.numeric(v)
+                 if(all(sort(v[v>0]) == seq_along(v))){
+                   v[v>0] <- rank(v[v>0])
+                   return(v)
+                 } else {
+                   stop("some ranks missing")
+                 }
+               } )
+  rownames(out) <- rownames(a)
+  return(out)
+}
+
+`ordertable2supp_new` <- function(x, noscore=NULL, check=FALSE){
+    x <- complete(x,noscore=noscore,check=check)
+    out <- hyper2()
+    
+    ## Now cycle through the rows; each row is a venue [voter]
+    for(i in seq_len(ncol(x))){
+        o <- x[,i,drop=TRUE]
+        out %<>% `+`(ordervec2supp(o))
+    } # i loop closes
+    return(out)
+}
+
 `ordertable2supp` <- function(x, noscore, incomplete=TRUE){
     if(missing(noscore)){
-        noscore <- c("Ret", "WD", "DNS", "DSQ", "DNP", "NC", "DNQ", "EX")
+        noscore <- c("Ret", "WD", "DNS", "DSQ", "DNP", "NC", "DNQ", "EX", "Sick")
     }
     venues <- colnames(x)
 
@@ -1068,7 +1113,24 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
   ordertable_to_ranktable(xx)
 }
 
-`is.dirichlet` <- function(H){all(lapply(brackets(H),length)==1)}
+`is.dirichlet` <- function(H){
+    len <- unlist(elements(lapply(brackets(H), length)))
+    pow <- elements(powers(H))
+    bra <- elements(brackets(H))
+    if (sum(len > 1) > 1) {
+        print("brackets must all be of length 1 [the numerators] except one [the denominator]")
+        return(FALSE)
+    }
+    denominator_bracket <- unlist(bra[len > 1])
+    numerator_brackets <- unlist(bra[len == 1])
+    if (all(numerator_brackets %in% denominator_bracket)) {
+        return(TRUE)
+    }
+    else {
+        print("Dirichlet distribution requires denominator to be all competitors")
+        return(FALSE)
+    }
+}
 
 `rdirichlet` <- function(n, H){
     if(is.hyper2(H)){
@@ -1221,38 +1283,50 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     dirichlet(rowSums(M)) - hyper2(apply(index,1,function(x){rownames(M)[x]},simplify=FALSE),jj[index])
 }
 
-`home_away` <- function(home_games_won,away_games_won){
-    if(is.complex(home_games_won)){
+`home_away` <- function (home_games_won, away_games_won){
+    if (is.complex(home_games_won)) {
         away_games_won <- Im(home_games_won)
-        home_games_won <- Re(home_games_won) # note, away_games_won is assigned first
+        home_games_won <- Re(home_games_won)
     }
-    teams <- rownames(home_games_won)
-    stopifnot(identical(teams,colnames(home_games_won)))
-    stopifnot(identical(teams,rownames(away_games_won)))
-    stopifnot(identical(teams,colnames(away_games_won)))
-    teams <- c(teams,"home")
     
-    H <- hyper2(pnames=teams)
+    teams <- rownames(home_games_won)
+    stopifnot(identical(teams, colnames(home_games_won)))
+    stopifnot(identical(teams, rownames(away_games_won)))
+    stopifnot(identical(teams, colnames(away_games_won)))
+    teams <- c(teams, "home")
+    H <- hyper2(pnames = teams)
+    for (i in seq_len(nrow(home_games_won))) {
+        for (j in seq_len(ncol(home_games_won))) {
+            if (i != j) {
+                home_team <- teams[i]
+                away_team <- teams[j]
 
-    for(i in seq_len(nrow(home_games_won))){
-        for(j in seq_len(ncol(home_games_won))){
-            if(i != j){  # diagonal means a team plays itself, meaningless.
-                ## First deal with home_games:
-                game_winner <- teams[i]
-                game_loser  <- teams[j]
-                no_of_matches <- home_games_won[i,j] # won with home strength helping
-                H[c(game_winner,           "home")] %<>% inc(no_of_matches)  # won with home strength helping
-                H[c(game_winner,game_loser,"home")] %<>% dec(no_of_matches)
-
-                ## now away games:
-                no_of_matches <- away_games_won[i,j] # won without the benefit of home strength
-                H[c(game_winner                  )] %<>% inc(no_of_matches)  # won without home ground helping...
-                H[c(game_winner,game_loser,"home")] %<>% dec(no_of_matches)  # home strength nevertheless on denominator
-                                
-            } # if(i != j) closes
-        } # j loop closes
-    } # i loop closes
+		home_wins <- home_games_won[i,j]
+		away_wins <- away_games_won[i,j] 
+                no_of_matches <- home_wins + away_wins 
+		
+                H[c(home_team,           "home")] %<>% inc(home_wins)
+ 		H[c(          away_team        )] %<>% inc(away_wins) 
+                H[c(home_team,away_team, "home")] %<>% dec(no_of_matches)
+            }
+        }
+    }
     return(H)
 }
 
+`balance` <- function(H){
+    H[pnames(H)] <- 0
+    H[pnames(H)] <- -sum(powers(H))
+    return(H)
+}
 
+`rrace` <- function(strengths){
+    out <- strengths
+    for (i in seq_along(out)) {
+        nextfinisher <- sample(names(strengths),size=1,prob=strengths)
+        out[i] <- nextfinisher
+        strengths <- strengths[names(strengths) != nextfinisher]
+    }
+    names(out) <- NULL
+    return(out)
+}

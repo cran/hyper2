@@ -52,13 +52,12 @@ resides in the \code{data/} directory.
 \references{
   Robin K. S. Hankin (2010).
   \dQuote{A Generalization of the Dirichlet Distribution},
-  \emph{Journal of Statistical Software}, 33(11), 1-18,
-  \doi{10.18637/jss.v033.i11}
+  \emph{Journal of Statistical Software}, 33(11), 1-18
 }
 \examples{
 summary(tennis)
 
-tennis \%>\% psubs(c("Federer","Laver","Graf","Navratilova"))
+tennis |> psubs(c("Federer","Laver","Graf","Navratilova"))
 
 ## Following line commented out because it takes too long:
 # specificp.gt.test(tennis_ghost,"G",0)

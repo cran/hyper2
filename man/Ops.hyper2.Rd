@@ -38,14 +38,14 @@ hyper2_sum_numeric(H,r)
 \details{
 
   If two independent datasets have \code{hyper2} objects \code{H1} and
-  \code{H2}, then the R idiom for combining these would be \code{H1+H2};
+  \code{H2}, then package idiom for combining these would be \code{H1+H2};
   the additive notation \dQuote{\code{+}} corresponds to addition of the
   support (or multiplication of the likelihood).  So \code{hyper2}
   objects are better thought of as support functions than likelihood
   functions; this is reflected in the print method which explicitly
   wraps the likelihood function in a \dQuote{\code{log()}}.
 
-  Idiom \code{H1-H1} returns {H1 + (-1)*H2}, useful for investigating
+  Idiom \code{H1-H1} returns \code{H1 + (-1)*H2}, useful for investigating
   the difference between likelihood functions arising from two different
   observations, or different probability models.  An example is given in
   \code{inst/soling.Rmd}.
@@ -62,7 +62,9 @@ hyper2_sum_numeric(H,r)
   \code{icons["L"] <- icons["L"] + 3} and \code{icons["L"] \%<>\%inc(3)}
   work (without this, one has to type \code{icons["L"] <-
   powers(icons["L"]) + 3}, which sucks).
-  
+
+  Raising a \code{hyper2} object to a power returns an error.
+
 }
 \value{
 Returns a \code{hyper2} object or a Boolean.

@@ -45,7 +45,7 @@ to produce a likelihood function.
 Function \code{ranktable_to_printable_object()} is a helper function
 that coerces a \code{ranktable} object to a matrix that prints nicely.
 
-The print method is discussed in vignette
+The print method is discussed in
 \code{inst/ordertable_to_ranktable.Rmd}.
 
 }
@@ -67,4 +67,9 @@ identical(xrank,ordertable_to_ranktable(ranktable_to_ordertable(xrank)))
 
 # maxp(ordertable2supp(xorder))  # should be close to p
 ordertable_to_ranktable(skating_table)
+
+# convert a rank table to a support function:
+rank_likelihood(wikitable_to_ranktable(volvo_table))
+
 }
+

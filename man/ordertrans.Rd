@@ -59,8 +59,8 @@ order statistic is identical:
 }
 
 There is a nice example of \code{ordertrans()} in
-\code{inst/eurovision.Rmd}, and file \code{inst/ordertrans.Rmd} provides
-further discussion and examples.
+\code{inst/eurovision.Rmd}, and package vignette \code{ordertrans}
+provides further discussion and examples.
 
 Function \code{ordertrans()} takes a second argument which allows the
 user to arrange an order vector into the order specified.
@@ -90,7 +90,7 @@ functions.
 
   The argument to \code{ordertrans()} is technically an order vector
   because it answers the question \dQuote{where did the first-named
-  competitor come?} (see the discussion at \code{rrank.Rd}).  But it is
+  competitor come?} (see the discussion at \link{rrank}).  But it is
   not a helpful order vector because you have to go searching through
   the names---which can appear in any order---for the competitor you are
   interested in.  I guess \dQuote{generalised order vector} might be a

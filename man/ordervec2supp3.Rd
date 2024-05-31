@@ -10,6 +10,7 @@
 \alias{race_to_hyper3}
 \alias{cheering}
 \alias{cheering3}
+\alias{rankvec_likelihood3}
 \title{Various functionality for races and hyper3 likelihood functions}
 \description{
 Various functions for calculating the likelihood function for order
@@ -23,6 +24,7 @@ den3(v,helped=NULL,lambda=1)
 char2nv(x)
 ordervec2supp3(v,nonfinishers=NULL)
 ordervec2supp3a(v,nonfinishers=NULL,helped=NULL,lambda=1)
+rankvec_likelihood3(v,nonfinishers=NULL)
 ordertable2supp3(a)
 cheering3(v,e,help,nonfinishers=NULL)
 args2ordervec(...)
@@ -30,9 +32,9 @@ args2ordervec(...)
 \arguments{
   \item{v}{Ranks in the form of a character vector.  Element \code{v[1]}
     is the first-placed competitor, element \code{v[2]} the second, and
-    so on}
+    so on.  For example, \code{ordervec2supp3(c('b','b','a','c','a'))}}
   \item{nonfinishers}{Character vector (a set) showing players that did
-    not finish}
+    not finish.  See details section and examples}
   \item{a}{An ordertable}
   \item{helped}{vector of entities being helped}
   \item{e,help,lambda}{Parameters controlling non-independence with
@@ -53,20 +55,40 @@ args2ordervec(...)
   See examples, and also the javelin vignette.
 
   Function \code{ordervec2supp3()} takes character vector showing the
-  order of finishing [i.e. a rank statistic], and returns a
-  generalized Plackett-Luce support function in the form of a
-  \code{hyper3} object.  It can take the output of
-  \code{args2ordervec()} or \code{rrace3()}.  See the examples section
-  below.
+  order of finishing [i.e. a rank statistic], and returns a generalized
+  Plackett-Luce support function in the form of a \code{hyper3} object.
+  It can take the output of \code{args2ordervec()} or \code{rrace3()}.
+  For example:
 
-  Experimental function \code{ordervec2supp3a()} is a generalized
-  version of \code{ordervec2supp3()} that allows for cheering effects.
+  \code{ordervec2supp3(c("a","b"),nonfinishers=c("a","b"))}
+
+  corresponds to a race between two twins of strength \code{a} and two
+  twins of strength \code{b}, with only one of each pair finishing;
+  \code{a} comes first and \code{b} comes second; symbolically
+
+  \deqn{a\succ b\succ\left\lbrace a,b\right\rbrace\longrightarrow
+    \mathcal{L}(a,b\left|a+b=1\right.)=\frac{a}{2a+2b}\cdot\frac{b}{a+2b}}{omitted}
+
+  Further,
+
+  \code{ordervec2supp3(c("a","b"),c("a","b","c"))}
+
+  corresponds to adding a singleton competitor of strength \code{c} who
+  did not finish:
+
+  \deqn{a\succ b\succ\left\lbrace a,b,c\right\rbrace\longrightarrow
+    \mathcal{L}(a,b,c\left|a+b+c=1\right.)=\frac{a}{2a+2b+c}\cdot\frac{b}{a+2b+c}}{omitted}
+
+  (observe that this likelihood function is informative about
+  \eqn{c}).  See the examples section below.  Experimental function
+  \code{ordervec2supp3a()} is a generalized version of
+  \code{ordervec2supp3()} that allows for cheering effects.
 
   Functions \code{num3()} and \code{den3()} are low-level helper
   functions that calculate the numerator and denominator for
   Plackett-Luce likelihood functions with clones; used in
   \code{ordervec2supp3()} and \code{ordervec2supp3a()}.
-  
+
   Function \code{ordertable2supp3()} takes an order table (the canonical
   example is the constructors' formula 1 grand prix results, see
   \code{constructor.Rd} and returns a generalized Plackett-Luce support
@@ -89,13 +111,20 @@ args2ordervec(...)
 
 }
 \author{Robin K. S. Hankin}
+\note{
+  Function \code{ordervec2supp3()} is mis-named [it takes a \emph{rank}
+  vector, not an \emph{order} vector]; it will be renamed
+  \code{rankvec_likelihood3()}, eventually.
+}  
 \seealso{\code{\link{ordertable2supp}},\code{\link{ordertrans}}}
 \examples{
 
 
 ordervec2supp3(c("a","a","b","c","a","b","c"))
-
 ordervec2supp3(rrace3())
+ordervec2supp3(c("a","b"),nonfinishers=c("a","b"))  # a > b >> {a,b}
+
+
 
 (o <- args2ordervec(a=c(1,6,9), b=c(2,3,4), c=c(1.1,11.1)))
 H <- ordervec2supp3(o)

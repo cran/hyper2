@@ -9,10 +9,10 @@
 \alias{allequal}
 \alias{equalprobs}
 \title{Maximum likelihood estimation}
-\description{\loadmathjax
+\description{
   Find the maximum likelihood estimate for p, also equal probabilities}
 \usage{
-maxp(H, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6, n=10,
+maxp(H, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6, n=1,
    show=FALSE, justlikes=FALSE, ...)
 maxplist(Hlist, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6, ...)
 maxp_single(H, startp=NULL, give=FALSE, fcm=NULL, fcv=NULL, SMALL=1e-6,
@@ -27,7 +27,9 @@ equalp(H)
   \item{H}{A \code{hyper2} or \code{hyper3} object}
   \item{Hlist}{A list with elements all \code{hyper2} objects}
   \item{HLSL}{An \code{lsl} object}
-  \item{startp}{A vector of probabilities}
+  \item{startp}{A vector of probabilities specifying the start-point for
+    optimization; if a full unit-sum vector, then the fill-up value will
+    be removed by \code{indep()} (except for \code{maxp_lsl()})}
   \item{give}{Boolean, with default \code{FALSE} meaning to return just
     the evaluate (including fillup), and \code{TRUE} meaning to return
     the entire formal output of the optimization routine}
@@ -40,7 +42,7 @@ equalp(H)
   \item{SMALL}{Numerical minimum for probabilities}
   \item{maxtry}{Integer specifying maximum number of times to try
     \code{constrOptim()} with slightly differing start points, to avoid
-    a known R bug which reports \code{wmmin is not finite}, bugzilla
+    a known \R bug which reports \code{wmmin is not finite}, bugzilla
     id 17703}
   \item{...}{Further arguments which \code{maxp()} passes to
     \code{constrOptim()}}
@@ -99,8 +101,8 @@ equalp(H)
   }
 
   where in \code{UI}, the first \eqn{n-1} rows enforce nonnegativity of
-  \mjseqn{p_i}, \mjeqn{1\leq p < n}{1<=i<n}; row \mjseqn{n} enforces
-  nonnegativity of the fillup value \mjseqn{p_n}; and the remaining
+  \eqn{p_i}, \eqn{1\leq p < n}{1<=i<n}; row \eqn{n} enforces
+  nonnegativity of the fillup value \eqn{p_n}; and the remaining
   (optional) rows enforce additional linear constraints.  Argument
   \code{CI} is a vector with corresponding elements.
 
@@ -110,10 +112,14 @@ equalp(H)
 \author{Robin K. S. Hankin}
 \note{
 
-  In manpages elsewhere, \code{n=2} is used for speed reasons.  Use the
-  default \code{n=10} or greater in production work.
+  In manpages elsewhere, \code{n=2} is sometimes used.  Previous
+  advice was to use \code{n=10} or greater in production work, but I
+  now think this is overly cautious and \code{n=1} is perfectly
+  adequate unless the dimension of the problem is large.
 
-  This functionality is peculiarly susceptible to off-by-one errors.
+  The (bordered) Hessian is given by function \code{hessian()},
+  documented at \code{gradient.Rd}; use this to assess the
+  \dQuote{sharpness} of the maximum.
 
   Function \code{maxp()} takes \code{hyper2} or \code{hyper3} objects
   but it does not currently work with \code{lsl} objects; use
@@ -123,7 +129,7 @@ equalp(H)
   running \code{maxp()}; thus hyper2 object \code{icons} and
   \code{icons_maxp} are included in the same \code{.rda} file.
   
-  Function \code{maxp()} can trigger a known R bug (bugzilla id 17703)
+  Function \code{maxp()} can trigger a known \R bug (bugzilla id 17703)
   which reports \dQuote{\code{wmmin is not finite}}.  Setting option
   \code{use_alabama} to \code{TRUE} makes the package use a different
   optimization routine.

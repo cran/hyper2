@@ -1,6 +1,6 @@
-`equalp.test` <- function(H, ...){
+`equalp.test` <- function(H, startp=NULL, ...){
     n <- size(H)
-    m_alternative <- maxp(H,give=TRUE,...)
+    m_alternative <- maxp(H,startp=startp, give=TRUE,...)
     alternative_support <- m_alternative$value
     jj <- fillup(m_alternative$par)
     names(jj) <- pnames(H)
@@ -38,7 +38,7 @@
         )
     class(rval) <- "hyper2test"
     return(rval)
-}
+}   # equalp.test() closes
 
 `knownp.test` <- function(H,p,...){
 
@@ -75,7 +75,7 @@
         )
     class(rval) <- "hyper2test"
     return(rval)
-}
+}   # knownp.test() closes
 
 
 
@@ -88,13 +88,17 @@
                   "greater"   = specificp.gt.test(H=H, i=i, specificp, ...)
                   )
            )
-}
+}   # specificp.test() closes
 
 `specificp.ne.test` <- function(H, i, specificp=1/size(H), ...){
     rsp <- round(specificp,getOption("digits"))  # for printing purposes
     if(is.character(i)){
       null_hypothesis <- paste("sum p_i=1, ",i, " = ", rsp, sep="")
-      i <- which(pnames(H)==i)
+      if(any(i %in% pnames(H))){
+          i <- which(pnames(H)==i)
+      } else {
+          stop(gettextf("entity %s not in pnames(H)", dQuote("i")))
+      }
     } else {
       null_hypothesis <- paste("sum p_i=1, p_",i, " = ", rsp, sep="")
     }
@@ -165,7 +169,7 @@
         )
     class(rval) <- "hyper2test"
     return(rval)
-}
+}   # specificp.ne.test() closes
 
 `specificp.gt.test` <- function(H, i, specificp=1/size(H), delta=1e-5, ...){  # alternative = "greater"
     ## NB here we treat specificp as a *lower* bound for the
@@ -180,7 +184,11 @@
     rsp <- round(specificp,getOption("digits"))  # for printing purposes
     if(is.character(i)){
       null_hypothesis <- paste("sum p_i=1, ", i, " <= ", rsp, sep="")
-      i <- which(pnames(H)==i)
+      if(any(i %in% pnames(H))){
+          i <- which(pnames(H)==i)
+      } else {
+          stop(gettextf("entity %s not in pnames(H)", dQuote("i")))
+      }
     } else {
       null_hypothesis <- paste("sum p_i=1, p_",i, " = ", rsp, sep="")
     }
@@ -250,7 +258,7 @@
         )
     class(rval) <- "hyper2test"
     return(rval)
-}
+}   # specificp.gt.test() closes
 
 `specificp.lt.test` <- function(H, i, specificp=1/size(H), ...){  # alternative = "less"
     ## NB here we treat specificp as an *upper* bound for the
@@ -266,7 +274,11 @@
     rsp <- round(specificp,getOption("digits"))  # for printing purposes
     if(is.character(i)){
       null_hypothesis <- paste("sum p_i=1, ",i, " >= ", rsp, sep="")
-      i <- which(pnames(H)==i)
+      if(any(i %in% pnames(H))){
+          i <- which(pnames(H)==i)
+      } else {
+          stop(gettextf("entity %s not in pnames(H)", dQuote("i")))
+      }
     } else {
       null_hypothesis <- paste("sum p_i=1, p_",i, " = ", rsp, sep="")
     }
@@ -328,9 +340,9 @@
         )
     class(rval) <- "hyper2test"
     return(rval)
-}
+}   # specificp.lt.test() closes
 
-`samep.test` <- function(H, i, give=FALSE, ...){
+`samep.test` <- function(H, i, give=FALSE, startp=NULL, ...){
     n <- size(H)
     stopifnot(all(table(i)==1))
     stopifnot(length(i) > 1)
@@ -346,15 +358,39 @@
         jj <- paste(paste("p_",i," = ",sep=""),collapse="")
         null_hypothesis <- substr(jj,1,nchar(jj)-3)
     }
-    SMALL <- 1e-3
+    SMALL <- 1e-6
 
-    m_alternative <- maxp(H, ..., give=TRUE)  # free optimization
+    m_alternative <- maxp(H, startp=startp, ..., give=TRUE)  # free optimization
     alternative_support <- m_alternative$value
     jj <- fillup(m_alternative$par)
     names(jj) <- pnames(H)
     alternative_estimate <- jj
     
     o <- n-length(i) 
+
+    ## Function q_to_p() takes a minimal vector V and returns a vector
+    ## of strengths.  We would have fillup(q_to_p(jj)) summing to 1.
+    ## Vector V is suitable for constrOptim() to work with.
+
+    ## Browse[1]> icons_maxp
+    ##         NB          L         PB        THC         OA       WAIS 
+    ## 0.25230411 0.17364433 0.22458188 0.17011281 0.11068604 0.06867083 
+
+    ## Browse[1]> startq
+    ## [1] 0.1000000 0.1666567 0.1666567 0.1666567
+
+    ## Browse[1]> q_to_p(startq)
+    ## [1] 0.1666567 0.1000000 0.1666567 0.1666567 0.1000000
+
+    ## Browse[1]> q_to_p(startq)
+    ## [1] 0.1666567 0.1000000 0.1666567 0.1666567 0.1000000
+
+    ## Browse[1]> fillup(q_to_p(startq))
+    ## [1] 0.1666567 0.1000000 0.1666567 0.1666567 0.1000000 0.3000300
+
+    ## optimization proceeds over R^(n-length(i))
+    startq <- rep(-SMALL+1/n,n-length(i))  # old one
+
 
     if(any(i==n)){
         `q_to_p` <- function(qq){   # NB 'i' in scope
@@ -367,6 +403,9 @@
             return(out)
         }
     } else {
+      startq[1] <- mean(alternative_estimate[i])
+      startq[-1] <- alternative_estimate[-i][-(n-length(i))]
+      startq <- startq*(1-SMALL)
         `q_to_p` <- function(qq){   # NB 'i' in scope
             out <- rep(0,n-1)
             out[i] <- qq[1]
@@ -375,18 +414,18 @@
         }
     } # if(i==n) closes
 
+    startq <- pmax(startq, SMALL*(1+SMALL))
     
     `objective` <- function(jj){ ## jj == c(v,p[-i])  (NB p[i]==v)
         -loglik(q_to_p(jj),H)
     }
     
-    ## optimization proceeds over R^(n-length(i))
-    startq <- rep(-SMALL+1/n,n-length(i))
 
     ## constraints on q:
     UI <- rbind(diag(nrow = o),-c(length(i),rep(1,o-1)))
     CI <- c(rep(SMALL,o),SMALL-1)
-    
+
+
     constrained_opt <-
         constrOptim(theta = startq, f = objective, grad = NULL, ui = UI, ci = CI, ...)
     null_support <- -constrained_opt$value
@@ -411,7 +450,7 @@
         )
     class(rval) <- "hyper2test"
     return(rval)
-}
+}   # samep.test() closes
 
 `print.hyper2test` <- function(x,...){
     cat("\n")
@@ -436,4 +475,4 @@
     cat("p-value: ", x$p.value, " ",x$sidedness, "\n", sep = "")
     cat("\n")
     return(invisible(x))
-}
+}   # print.hyper2test() closes

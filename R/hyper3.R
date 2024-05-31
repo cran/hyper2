@@ -1,14 +1,19 @@
 `hyper3` <- function(B=list(), W=list(), powers=0,pnames){
-    if(all(unlist(lapply(B,is_ok_weightedplayers)))){
-        return(hyper3_nv(B,powers,pnames))
+    if(is.matrix(B)){
+      return(hyper3_m(B,W))
+    } else if(all(unlist(lapply(B,is_ok_weightedplayers)))){
+      return(hyper3_nv(B,powers,pnames))
     } else {
-        return(hyper3_bw(B,W,powers,pnames))
+      return(hyper3_bw(B,W,powers,pnames))
     }
 }
 
 `hyper3_bw` <- function(B=list(), W=list(), powers=0,pnames){
                                         # hyper3_bw(list(c("a","b"),c("b","c","e")),list(c(1,4),c(1,3,9)),1:2,letters[1:5]) 
+  
     stopifnot(length(B) == length(W))
+    stopifnot(all(unlist(lapply(B,length)) == unlist(lapply(W,length))))
+
     if(length(powers)==1){powers <- rep(powers,length(B))}
     if(missing(pnames)){pnames <- sort(unique(c(B ,recursive=TRUE)))}
     out <- identityL3(B,W,powers)  # the meat
@@ -23,6 +28,20 @@
     hyper3_bw(lapply(L,names),lapply(L,as.vector),powers,pnames)
 }
 
+`hyper3_m` <- function(M,p,stripzeros=TRUE){
+  if(stripzeros){
+    wanted <- apply(M,1,function(x){any(x!=0)})
+    M <- M[wanted,]
+    p <- p[wanted]
+  }
+
+  hyper3(
+      B = rep(list(colnames(M)),nrow(M)),
+      W = unclass(as.data.frame(t(M))),
+      powers=p[wanted],
+      pnames = colnames(M)
+  )
+}
 
 `is_ok_weightedplayers` <- function(x){ # x=c(a=33,b=4,c=65)
     if(is.null(names(x))){
@@ -60,6 +79,7 @@ setGeneric("weights",function(object, ...){standardGeneric("weights")})
 }
 
 `as.hyper3` <- function(x){
+    if(is.hyper3(x)){return(x)}
     if(is.hyper2(x)){
         return(hyper3_bw(
             B=brackets(x),
@@ -81,12 +101,17 @@ setGeneric("weights",function(object, ...){standardGeneric("weights")})
         names(jj) <- b[[i]]
         out[[i]] <- jj
     }
-    return(out)
+    return(disord(out,h=hashcal(H3)))
 }
 
 `print.hyper3` <- function(x,...){
-    b <- as.namedvectorlist(x)
+    b <- elements(as.namedvectorlist(x))
     p <- elements(powers(x))
+    if(!isFALSE(getOption("give_warning_on_nonzero_power_sum"))){
+      if(sum(powers(x)) !=0){
+          warning("powers have nonzero sum")
+      }
+    }
     out <- "log( "
     for(i in seq_along(b)){
         out <- paste(out, "(", pnv(b[[i]]),")^",p[i],sep="")
@@ -159,7 +184,7 @@ setGeneric("weights",function(object, ...){standardGeneric("weights")})
       }
   }  # if(unary) closes
 
-  if (!is.element(.Generic, c("+", "-", "==", "!=", "*", "^" ))){
+  if (!is.element(.Generic, c("+", "-", "==", "!=", "*"))){
       stop(gettextf("binary operator %s not defined for hyper3 objects", dQuote(.Generic)))
   }
   
@@ -261,7 +286,9 @@ char2nv <- function(x){
 }
 
 `[<-.hyper3` <- function(x, index, ..., value){  # index must be a named vector or a list of named vectors
-    if(missing(index)){  # A[] <- B
+    if(inherits(value,"weight")){
+        out <- setweight(x,index,value)
+    } else if(missing(index)){  # A[] <- B
         jj <- overwrite_lowlevel3(x,value)
         if(all(pnames(value) %in% pnames(x))){
             out <- hyper3_bw(jj[[1]],jj[[2]],jj[[3]],pnames=pnames(x))
@@ -275,6 +302,7 @@ char2nv <- function(x){
             out <- hyper3_bw(jj[[1]],jj[[2]],jj[[3]],pnames=pnames(x)) # do not change pnames
         } else { # index introduces a new pname
             out <- hyper3_bw(jj[[1]],jj[[2]],jj[[3]])
+            pnames(out) <- sort(unique(c(pnames(x),names(index))))
         }
     }
     return(out)
@@ -334,7 +362,7 @@ char2nv <- function(x){
 }
 
        
-`rhyper3` <- function(n=5,s=3,type='race',...){
+`rhyper3` <- function(n=5,s=4,type='race',...){
     switch(type,
            race = rracehyper3(n=n,size=s,...),
            pair = rpair3(n=n,s=s,...)
@@ -382,6 +410,8 @@ stop("not yet written")
     return(out)
 }
 
+`rankvec_likelihood3` <- `ordervec2supp3`
+
 `ordervec2supp3a` <- function(v,nonfinishers=NULL,helped=NULL,lambda=1){
   out <- num3(v,helped=helped,lambda=lambda)  # numerator
     for(i in seq_along(v)){
@@ -390,9 +420,7 @@ stop("not yet written")
   return(out)
 }
 
-`rwinner3` <- function(pn,ps){    # returns a randomly generated race winner
-    ## pn = c(a=3,b=1,c=2)        # player numbers (three "a"s, one "b" and two "c"s) NB can include zeros
-    ## ps = c(a=0.1, b=0.7, c=0.2)  # player strengths
+`rwinner3` <- function(pn=c(a=2,b=4,c=2,d=1),ps=c(a=0.3,b=0.1,c=0.2,d=0.4)){
     stopifnot(all(table(names(pn))<=1))
     stopifnot(all(table(names(ps))<=1))
     stopifnot(identical(names(pn),names(ps)))
@@ -504,31 +532,28 @@ stop("not yet written")
 
     for(i in seq_len(nrow(home_games_won))){
         for(j in seq_len(ncol(home_games_won))){
-            if(i != j){  # diagonal means a team plays itself, meaningless.
-                ## First deal with home_games:
-                game_winner <- teams[i]
-                game_loser  <- teams[j]
-                no_of_matches <- home_games_won[i,j] # won with home strength helping
+            if(i != j){  
+                home_team <- teams[i]
+                away_team <- teams[j]
 
+		home_wins <- home_games_won[i,j]
+		away_wins <- away_games_won[i,j] 
+                no_of_matches <- home_wins + away_wins 
+
+                ## home wins:
                 jj <- lambda
-                names(jj) <- game_winner
-                H[jj] %<>% inc(no_of_matches)  # won with home strength helping
-
-                jj <- c(lambda,1)
-                names(jj) <- c(game_winner,game_loser)
-                H[jj] %<>% dec(no_of_matches)
-
-
-                ## now away games:
-                no_of_matches <- away_games_won[i,j] # won without the benefit of home strength
+                names(jj) <- home_team
+                H[jj] %<>% inc(home_wins)
+                
+                ## away wins:
                 jj <- 1
-                names(jj) <- game_winner
-                H[jj] %<>% inc(no_of_matches)  # won without home ground helping...
+                names(jj) <- away_team
+                H[jj] %<>% inc(away_wins)
 
-                jj <- c(1,lambda)
-                names(jj) <- c(game_winner,game_loser)
-                H[jj] %<>% dec(no_of_matches)  # home strength nevertheless on denominator
-                                
+                ## denominator
+                jj <- c(lambda,1)
+                names(jj) <- c(home_team,away_team)
+                H[jj] %<>% dec(no_of_matches)
             } # if(i != j) closes
         } # j loop closes
     } # i loop closes
@@ -589,4 +614,38 @@ stop("not yet written")
   out <- rep(jj,times=unlist(lapply(L,length)))
   names(out) <- c(L,recursive=TRUE)
   return(out)
+}
+
+`sum.hyper3` <- function(x, ..., na.rm=FALSE){
+  if(nargs()==1){
+    return(x)
+  } else if (nargs()==2){
+    return(hyper3_add(x, ...))
+  } else {
+    return(hyper3_add(x, Recall(...)))
+  }
+}
+
+`as.weight` <- function(x){
+    stopifnot(is.numeric(x))
+    stopifnot(x >= 0)
+    class(x) <- "weight" # this is the only place that class is set to weight
+    return(x)
+}
+
+`setweight` <- function(x,index,value){
+    x <- as.hyper3(x)
+    if(length(value)==1){value <- rep(value,length(index))}
+    stopifnot(length(index) == length(value))
+    for(i in seq_along(index)){
+        x <- hyper3_nv(
+            lapply(as.namedvectorlist(x),
+                   function(p){
+                       p[names(p)==index[i]] <- value[i] # The meat
+                       return(p)
+                   }),
+            powers=powers(x),
+            pnames=pnames(x))
+    }
+    return(x)
 }
