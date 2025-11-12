@@ -55,9 +55,16 @@ change in the future.
 
 Object \code{F1_table_2017} is simply the first 20 columns of
 \code{read.table(inst/formula1_2017.txt)} and object
-\code{F1_points_2017} is column 21.  The likelihood function
-\code{formula1} is \code{ordertable2supp(F1_table_2017)}.  The datasets
-in the package are derived from text files in the \code{inst/} directory
+\code{F1_points_2017} is column 21.  The final column of all the text
+files is the points and it is easy to mistake this for a venue with
+results (doing so will give a \dQuote{\code{Error in ordervec2supp(o) :
+nonzero elements of d should be 1,2,3,4,...,n}} error).
+
+The likelihood function \code{formula1} is
+\code{ordertable2supp(F1_table_2017)} [NB: \code{suppfun(F1_table_2017)}
+fails: \code{suppfun()} will not try to guess whether its argument is a
+ranktable or an ordertable].  The datasets in the package are derived
+from text files in the \code{inst/} directory
 (e.g. \code{formula1_2017.txt}) by script file
 \code{inst/f1points_Omaker.R}.  Executing this script creates files like
 \code{formula1_results_2017.rda}.
@@ -69,12 +76,22 @@ and support functions as follows:
 a <- read.table("formula1_2022.txt",header=TRUE)
 a <- a[,seq_len(ncol(a)-1)]  # strips out the points column
 wikitable_to_ranktable(a)
-ordertable2supp(a)
+ordertable2supp(a)      # works fine
+suppfun(ordertable(a))  # Same as previous line, but suppfun() needs to know what its argument is
 }
 
+To convert to a numeric matrix with \code{DNS} etc converted to
+\code{NA}:
 
+\preformatted{
+a <- read.table("formula1_2024.txt",header=TRUE)
+a <- a[, -ncol(a)]
+a <- as.matrix(a)
+storage.mode(a) <- "numeric"
+}
 
-
+[this is used in file \code{inst/test_formula1.R}, which provides a
+consistency check for files \code{inst/formula1_???.txt}].
 
 Function \code{formula1_points_system()} gives various possible points
 systems for the winner, second, third, etc, placing drivers.  

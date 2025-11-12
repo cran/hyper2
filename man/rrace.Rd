@@ -25,10 +25,8 @@ until the final element is the last to cross the finishing line.
 o <- c(a=0.4, b=0.3, c=0.2, d=0.1)
 rrace(o)
 
-rankvec_likelihood(rrace(o))
+suppfun(rrace(o))
 
-D <- t(replicate(10,rrace(o))) # 10 races
-H <- hyper2()
-for(i in seq_len(nrow(D))){H <- H+rankvec_likelihood(D[i,])}
-maxp(H)  # should be close to o
+as.ranktable(t(replicate(10, rrace(o)))) # same as rrank(10,o)
+
 }

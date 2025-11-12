@@ -9,7 +9,7 @@
 
   Various random hyper3 objects, in the context of the race metaphor.
   They return \dQuote{get you going} examples of \code{hyper3} objects.
-  The defaults correspond to simple but non-trivial with straightforward
+  The defaults are simple but non-trivial and have straightforward
   interpretations.
 
   The defaults are
@@ -23,11 +23,11 @@
   
 }
 \usage{
-rwinner3(pn=c(a=2,b=4,c=2,d=1),ps=c(a=0.3, b=0.1,c=0.2,d=0.4))
-rpair3(n=5,s=3,lambda=1.3)
-rrace3(pn=c(a=2,b=4,c=2,d=1),ps=c(a=0.3, b=0.1,c=0.2,d=0.4))
-rracehyper3(n=4,size=9,ps=NULL,races=3)
-rhyper3(n=5,s=4,type='race',...)
+rwinner3(pn = c(a=2, b=4, c=2, d=1), ps = c(a=0.3, b=0.1, c=0.2, d=0.4))
+rpair3(n=5, s=3, lambda=1.3)
+rrace3(pn = c(a=2, b=4, c=2, d=1), ps=c(a=0.3, b=0.1, c=0.2, d=0.4))
+rracehyper3(n=4, size=9, ps=NULL, races=3)
+rhyper3(n=5, s=4, type='race', ...)
 }
 \arguments{
   \item{pn}{A named integer vector showing numbers of each type of player}

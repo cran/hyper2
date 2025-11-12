@@ -1,0 +1,78 @@
+## ----setup, include=FALSE---------------------------------
+set.seed(0)
+library("hyper2")
+library("magrittr")
+options(rmarkdown.html_vignette.check_title = FALSE)
+knitr::opts_chunk$set(echo = TRUE)
+knit_print.function <- function(x, ...){dput(x)}
+registerS3method(
+  "knit_print", "function", knit_print.function,
+  envir = asNamespace("knitr")
+)
+
+## ----out.width='20%', out.extra='style="float:right; padding:10px"',echo=FALSE----
+knitr::include_graphics(system.file("help/figures/hyper2.png", package = "hyper2"))
+
+## ----hyper3_default---------------------------------------
+hyper3() # default creation, returns a uniform support function
+
+## ----hyper3_1---------------------------------------------
+hyper3(list(c(a=1.2),c(b=1),c(a=1.2,b=1)),powers=c(3,4,-7)) # dispatches to hyper3_nv()
+
+## ----hyper3_2---------------------------------------------
+hyper3(B=list("a",c("a","b"),"b"),W=list(1.2,c(1.2,1),1),powers=c(3,4,-7)) # dispatches to hyper3_bw()
+
+## ----hyper3_3---------------------------------------------
+M <- matrix(rpois(15,3),5,3)
+colnames(M) <- letters[1:3]
+M
+hyper3(M,c(2,3,-1,-5,1))   # dispatches to hyper3_m()
+
+## ----hyper3_add_terms-------------------------------------
+H <- hyper3()
+H[c(p1=1.3)] <- 5  # terms not present are created
+H[c(p2=1  )] <- 2
+H[c(p1=1.3,p2=1)] <- -7
+H
+
+## ----hyper3_extract---------------------------------------
+H <- hyper3(list(c(a=1.2),c(b=1),c(a=1.2,b=1)),powers=c(3,4,-7))
+H[c(a=1.2)] <- 100  # terms present may be modified...
+H[c(a=1.2,x=1)] %<>% dec(97) # or incremented
+H
+
+## ----hyper3_ordervec2supp3--------------------------------
+ordervec2supp3(c("a","a","b","c","a","b","c"))
+
+## ----hyper3_ordervec2supp3nonfinishers--------------------
+ordervec2supp3(c("a","b"),nonfinishers=c("a","b"))  # a > b >> {a,b}
+
+## ----hyper3_attemptstable2supp3---------------------------
+(jj <- data.frame(throw1=c(a=8,b=2,c=1),throw2=c(5,"X",3)))
+attemptstable2supp3(jj)
+
+## ----hyper3_dirichlet3------------------------------------
+dirichlet3(c(x=6,y=2,z=2),lambda=1.8)  
+
+## ----hyper3_modifyweight----------------------------------
+(H <- rankvec_likelihood(letters[1:5]))
+H["b"] <- as.weight(1.88)
+H
+setweight(H,"c",1000)
+
+## ----hyper3_ordertable2supp3------------------------------
+(o <- constructor_2020_table[1:6,1:4])
+ordertable2supp3(o)
+
+## ----hyper3_home_away3------------------------------------
+M <- matrix(c(NA,9+2i,7+2i,6+5i,NA,2+4i,2+2i,9+3i,NA),3,3)
+teams <- letters[1:3]
+dimnames(M) <- list("@home" = teams,"@away"=teams)
+M
+home_away3(M,lambda=1.88)
+
+## ----hyper3_powersbecomes---------------------------------
+(H <- hyper3(list(c(a=1.2),c(b=1),c(a=1.2,b=1)),powers=c(3,4,-7)))
+powers(H) <- powers(H) * 3
+H
+

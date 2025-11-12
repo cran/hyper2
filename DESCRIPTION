@@ -1,7 +1,7 @@
 Package: hyper2
 Type: Package
 Title: The Hyperdirichlet Distribution, Mark 2
-Version: 3.1-0
+Version: 3.2
 Authors@R: person(given=c("Robin", "K. S."), family="Hankin", role = c("aut","cre"), email="hankin.robin@gmail.com", comment = c(ORCID = "0000-0001-5982-0415"))
 Maintainer: Robin K. S. Hankin <hankin.robin@gmail.com>
 Description: A suite of routines for the hyperdirichlet distribution
@@ -12,18 +12,20 @@ Description: A suite of routines for the hyperdirichlet distribution
    <doi:10.18637/jss.v109.i08>.
 License: GPL (>= 2)
 LazyData: yes
-Depends: methods, cubature, R (>= 3.5.0)
+Depends: R (>= 4.1.0)
 Suggests: knitr, markdown, rmarkdown, testthat, bookdown, rticles, covr
 VignetteBuilder: knitr
 Imports: Rcpp (>= 1.0-7), partitions, disordR (>= 0.0-9), alabama,
-        calibrator, Rdpack, magrittr, frab
+        calibrator, Rdpack, magrittr, cubature, methods
 LinkingTo: Rcpp
-URL: https://github.com/RobinHankin/hyper2
+URL: https://github.com/RobinHankin/hyper2,
+        https://robinhankin.github.io/hyper2/
 BugReports: https://github.com/RobinHankin/hyper2/issues
 RoxygenNote: 7.1.1
 RdMacros: Rdpack
 NeedsCompilation: yes
-Packaged: 2024-05-31 13:26:53 UTC; rhankin
-Author: Robin K. S. Hankin [aut, cre] (<https://orcid.org/0000-0001-5982-0415>)
+Packaged: 2025-11-12 08:19:46 UTC; rhankin
+Author: Robin K. S. Hankin [aut, cre] (ORCID:
+    <https://orcid.org/0000-0001-5982-0415>)
 Repository: CRAN
-Date/Publication: 2024-05-31 15:22:53 UTC
+Date/Publication: 2025-11-12 15:40:02 UTC

@@ -1,5 +1,5 @@
 `hyper2` <-  function(L=list(), d=0, pnames){
-  if(length(d)==1){d <- rep(d,length(L))}
+  if(length(d) == 1){d <- rep(d,length(L))}
   if(missing(pnames)){pnames <- sort(unique(c(L,recursive=TRUE)))}
   stopifnot(is_valid_hyper2(L,d,pnames))
   out <- identityL(L,d)
@@ -44,12 +44,12 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 
 ## setter methods end
 
-`is.hyper2` <- function(H){inherits(H,"hyper2") & !inherits(H,"hyper3")}
-`is.hyper3` <- function(H){inherits(H,"hyper2") &  inherits(H,"hyper3")}
+`is.hyper2` <- function(H){inherits(H,"hyper2") && !inherits(H,"hyper3")}
+`is.hyper3` <- function(H){inherits(H,"hyper2") &&  inherits(H,"hyper3")}
 
 `length.hyper2` <- function(x){length(x$brackets)}
 
-`is_constant` <- function(H){ length(H)==0 }
+`is_constant` <- function(H){ length(H) == 0 }
 
 `is_valid_hyper2` <- function(L,d,pnames){
   stopifnot(is.list(L))
@@ -89,7 +89,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 }
 
 `.print.helper` <- function(cv){  # Character vector
-  if(length(cv)==1){return(cv)}
+  if(length(cv) == 1){return(cv)}
   out <- paste("(",cv[1],sep="")
   for(i in seq_along(cv)[-1]){ out <- paste(out," + ",cv[i],sep="") }
   out <- paste(out,")",sep="")
@@ -98,20 +98,20 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
   
 `print.hyper2` <- function(x,...){
   if(!isFALSE(getOption("give_warning_on_nonzero_power_sum"))){
-      if(sum(powers(x)) !=0){
+      if(sum(powers(x)) != 0){
           warning("powers have nonzero sum")
       }
   }
   b <- elements(brackets(x))
   powers <- elements(powers(x))
-  if(length(b)==0){  # not is.null(b)
+  if(length(b) == 0){  # not is.null(b)
       out <- paste(.print.helper(pnames(x)),"^0",sep="")
   }
   out <- "log("
   for(i in seq_along(b)){
     pn <- unlist(b[i])
     pp <- powers[i]
-    if(pp==1){
+    if(pp == 1){
       out <- paste(out, .print.helper(pn))
     } else {
       out <- paste(out, .print.helper(pn), "^",pp,sep="")
@@ -157,10 +157,10 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 }
 
 `loglik_single` <- function(p,H,log=TRUE){
-  stopifnot(sum(powers(H))==0)
-  stopifnot(all(p>=0))
+  stopifnot(sum(powers(H)) == 0)
+  stopifnot(all(p >= 0))
   if(length(p) == size(H)-1){
-    stopifnot(sum(p)<=1)
+    stopifnot(sum(p) <= 1)
     probs <- fillup(p)
   } else if(length(p) == size(H)){
     if(is.null(names(p))){stop("p==size(H), p must be a named vector")}
@@ -307,7 +307,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     value <- elements(value)
     stopifnot(is.numeric(value)) # coercion to integer is done in C
     stopifnot(is.vector(value))
-    if(length(value)==1){
+    if(length(value) == 1){
         value <- rep(value, length(index))
     }
     return(assigner(brackets(x),powers(x),index,value))
@@ -423,10 +423,12 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
         }
     }  # i loop closes
     if(justlikes){ return(likes) }
-    if(give){
+    if(isTRUE(give)){
         return(c(out,likes=list(likes),evaluate=list(fillup(out$par,H))))
+    } else if(isFALSE(give)){
+        return(fillup(out$par,H))
     } else {
-      return(fillup(out$par,H))
+        return(list(fillup(out$par,H),"Log-likelihood" = out$value))
     }
 }  # maxp() closes
 
@@ -635,28 +637,14 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
 
 `head.hyper2` <- function(x,...){ x[head(elements(brackets(x)),...)] }
 
-`rank_likelihood` <- function(M,times=1){
-  M <- rbind(M)  # deals with vectors
-  times <- cbind(seq_len(nrow(M)),times)[,2]
-  if(is.null(colnames(M))){
-    cn <- NA
-  } else {
-    cn <- colnames(M)
-  }
-  out <- hyper2(pnames=cn)
-  for(i in seq_len(nrow(M))){
-      out <- out + ordervec2supp(rev(M[i,,drop=TRUE]))
-  } 
-  return(out)
-}
-
-`rankvec_likelihood` <- function(v){
+`rankvec_likelihood` <- function(v, nonfinishers = NULL){
   stopifnot(all(table(v)==1))
   out <- hyper2()
   v <- rev(v)   # first-placed competitor is the first element of v
   for(i in seq_along(v)){
-    out[v[i]] <- out[v[i]] + 1  #  out[v[i]] %<>% inc
-    out[v[seq_len(i)]] <- out[v[seq_len(i)]] - 1
+      out[v[i]] <- out[v[i]] + 1  #  out[v[i]] %<>% inc
+      still_running <- c(v[seq_len(i)],nonfinishers)
+      out[still_running] <- out[still_running] - 1
   }
   return(out)
 }
@@ -681,7 +669,7 @@ setGeneric("pnames<-",function(x,value){standardGeneric("pnames<-")})
     ell <- length(p)
     r <- integer(ell)
     i <- 1   # 'i' means placing.
-    while(any(p>0)){  
+    while(any(p > 0)){  
         m <- sample(ell,1,prob=p) #randomly chosen competitor
         r[i] <- m   # place 'i' is competitor 'm'  
         p[m] <- 0   # competitor 'm' can't place again.
@@ -696,61 +684,18 @@ rorder_single <- function(p){
     return(o)
 }
 
-`rrank` <- function(n=1, p, pnames=NULL, fill=FALSE, rnames=NULL){
+`rrank` <- function(n=7, p=(4:1)/10, pnames=NULL, fill=FALSE, rnames=NULL){
     if(fill){ p <- fillup(p) }
     if(is.null(pnames)){pnames <- names(p)}
+    if(is.null(pnames)){pnames <- letters[seq_along(p)]}
     out <- t(replicate(n, rrank_single(p)))
-    colnames(out) <- pnames
+    out[] <- pnames[out]
     rownames(out) <- rnames
-    class(out) <- "ranktable"
-    return(drop(out))
+    return(as.ranktable(out))
 }
 
-`ranktable_to_printable_object` <- function(x){
-  x <- rbind(x)
-  if(is.null(colnames(x))){
-    cn <- seq_len(ncol(x))
-  } else {
-    cn <- colnames(x)
-  }
-  thing <- matrix(cn[x],ncol=ncol(x))
-  colnames(thing) <- paste("c",seq_len(ncol(x)),sep="")
-  rownames(thing) <- rownames(x)
-  class(thing) <- "noquote"
-  return(thing)
-}
-
-`print.ranktable` <- function(x,...){
-    print(ranktable_to_printable_object(x))
-}
-
-`print.ranktablesummary` <- function(x,...){
-    x <- ranktable_to_printable_object(x)
-    class(x) <- "matrix"
-    x <- cbind(x[,1:3],"...",x[,ncol(x)+c(-1,0)])
-    x <- noquote(x)
-    print(x)
-    class(x) <- NULL
-    return(invisible(x))
-}
-
-`summary.ranktable` <- function(object, ...){
-    class(object) <- "ranktablesummary"
-    return(object)
-}
-
-`ranktable_to_ordertable` <- function(xrank){
-  out <- apply(xrank,1,order)
-  rownames(out) <- colnames(xrank)
-  return(out)
-}
-
-`ordertable_to_ranktable` <- function(xorder){
-  stopifnot(all(apply(xorder,2,function(x){all(sort(x)==seq_along(x))})))
-  out <- t(apply(xorder,2,function(x){seq_len(nrow(xorder))[order(x)]}))
-  colnames(out) <- rownames(xorder)
-  class(out) <- "ranktable"
-  return(out)
+`rrankk` <- function(n = 37, p = (20:1)/210, pnames=NULL, fill=FALSE, rnames=NULL){
+    rrank(n = n, p = p, pnames = pnames, fill = fill, rnames = rnames)
 }
 
 `.allorders` <- function(x){
@@ -767,7 +712,7 @@ rorder_single <- function(p){
 `mult_grid` <- function(L){
   if(length(L) == 0){
     return(1)
-  } else if(length(L)==1){
+  } else if(length(L) == 1){
     return(L)
   } else {
     return(Recall(c(list(pair_grid(L[[1]],L[[2]])),L[-(1:2)])))
@@ -782,7 +727,7 @@ rorder_single <- function(p){
         dotargs <- lapply(dotargs, character_to_number, pnames=pnames(H))
     }
 
-    if(any(table(c(dotargs,recursive=TRUE))>1)){
+    if(any(table(c(dotargs,recursive=TRUE)) > 1)){
         stop('repeated competitor')
     }
 
@@ -816,13 +761,13 @@ rorder_single <- function(p){
 }
 
 `elimination` <- function(all_players){
-    if(is.numeric(all_players) & (length(all_players)==1)){
+    if(is.numeric(all_players) && (length(all_players)==1)){
       all_players <- letters[seq_len(all_players)]
     }
     all_players <- rev(all_players)
     H <- ggrl(hyper2(pnames=sort(all_players)),all_players,all_players[length(all_players)])
     players <- all_players[-length(all_players)]
-    while(length(players)>1){
+    while(length(players) > 1){
         for(i in seq_along(H)){
             H[[i]] <- ggrl(H[[i]],players,players[length(players)])
         }
@@ -911,10 +856,10 @@ rorder_single <- function(p){
     for(i in seq_len(nrow(M))){
         onerow <- M[i,]
         choices <- names(onerow[!is.na(onerow)])
-        out[choices] %<>%  `-`(sum(onerow,na.rm=TRUE))
+        out[choices] %<>%  subtract(sum(onerow,na.rm=TRUE))
     }
     for(j in seq_len(ncol(M))){
-        out[colnames(M)[j]] %<>% `+`(sum(M[,j],na.rm=TRUE))
+        out[colnames(M)[j]] %<>% add(sum(M[,j],na.rm=TRUE))
     }
     return(out)
 }
@@ -926,10 +871,10 @@ rorder_single <- function(p){
 
     for(i in seq_len(nrow(M))){
         onerow <- M[i,]
-        winning_side <- onerow==1
-        losing_side  <- onerow==0
+        winning_side <- onerow == 1
+        losing_side  <- onerow == 0
         playing <- !is.na(onerow)
-        if(any(playing) & any(winning_side) & any(losing_side)){
+        if(any(playing) && any(winning_side) && any(losing_side)){
           out[pn[which(winning_side)]] %<>% inc
           out[pn[which(playing)]] %<>% dec
         }
@@ -937,14 +882,14 @@ rorder_single <- function(p){
     return(out)
 }
 
-`inc` <- function(H,val=1){ H %<>% `+`(val)}   # increment
-`dec` <- function(H,val=1){ H %<>% `-`(val)}   # decrement
+`inc` <- function(H,val=1){ H %<>% add(val)}   # increment
+`dec` <- function(H,val=1){ H %<>% subtract(val)}   # decrement
 
 `trial` <- function(winners,players,val=1){
     stopifnot(all(winners %in% players))
     H <- hyper2()
-    H[winners] %<>% `+`(val)
-    H[players] %<>% `-`(val)
+    H[winners] %<>% add(val)
+    H[players] %<>% subtract(val)
     return(H)
 }   
 
@@ -976,7 +921,7 @@ rorder_single <- function(p){
 
 `ordervec2supp` <- function(d){
     if(is.null(names(d))){stop("vector must be named")}
-    wanted <- d!=0
+    wanted <- d != 0
     if(any(sort(d[wanted]) != seq_len(sum(wanted)))){
         stop("nonzero elements of d should be 1,2,3,4,...,n")
     }
@@ -987,54 +932,21 @@ rorder_single <- function(p){
         eligible <- which(d>=0)  #NB inclusive inequality; zero is DNC etc who
 
         ## Increment numerator power of the first choice among eligible players:
-        out[nd[d==1]] %<>% inc
+        out[nd[d == 1]] %<>% inc
         
         ## Power of set of all eligible players decrements:
         out[nd[eligible]] %<>% dec
         
         ## once you've come first in the field, you are ineligible to be first again:
-        d[d==1] <- -1  # NB strictly <0
+        d[d == 1] <- -1  # NB strictly <0
         
         ## Now, everyone moves down the list, so who *was* in
         ## second place becomes first place, who *was* third place
         ## becomes second, and so on:
         
-        d[d>0] %<>% dec
+        d[d > 0] %<>% dec
         
     } # while() loop closes
-    return(out)
-}
-
-
-`complete` <- function(a,noscore=NULL,check=FALSE){
-  if(is.null(noscore)){
-    noscore <- c("Ret", "WD", "DNS", "DSQ", "DNP", "NC", "DNQ", "EX", "Sick")
-  }
-  
-  out <- apply(a,2,
-               function(v){
-                 v[v %in% noscore] <- "0"
-                 v <- as.numeric(v)
-                 if(all(sort(v[v>0]) == seq_along(v))){
-                   v[v>0] <- rank(v[v>0])
-                   return(v)
-                 } else {
-                   stop("some ranks missing")
-                 }
-               } )
-  rownames(out) <- rownames(a)
-  return(out)
-}
-
-`ordertable2supp_new` <- function(x, noscore=NULL, check=FALSE){
-    x <- complete(x,noscore=noscore,check=check)
-    out <- hyper2()
-    
-    ## Now cycle through the rows; each row is a venue [voter]
-    for(i in seq_len(ncol(x))){
-        o <- x[,i,drop=TRUE]
-        out %<>% `+`(ordervec2supp(o))
-    } # i loop closes
     return(out)
 }
 
@@ -1064,7 +976,7 @@ rorder_single <- function(p){
     for(i in seq_len(nrow(fmat))){
         o <- fmat[i,,drop=TRUE]
         if(incomplete){ o[o>0] <- rank(o[o>0]) }
-        out %<>% `+`(ordervec2supp(o))
+        out %<>% add(ordervec2supp(o))
     } # i loop closes
     return(out)
 } 
@@ -1100,8 +1012,8 @@ rorder_single <- function(p){
 `wikitable_to_ranktable`  <- function(wikitable, strict=FALSE){
   f <- function(x){  # deal with DNF etc and zero
     suppressWarnings(out <- as.numeric(as.vector(x)))
-    DNF <- is.na(out) | (out==0)
-    if(sum(DNF)>1 & strict){
+    DNF <- is.na(out) | (out == 0)
+    if(sum(DNF) > 1 && strict){
       warning("more than one competitor did not place.  EM algorithm used")
     }
     out[DNF] <- max(out[!DNF]) + seq_len(sum(DNF))
@@ -1134,19 +1046,16 @@ rorder_single <- function(p){
 
 `rdirichlet` <- function(n, H){
     if(is.hyper2(H)){
-        if(is.dirichlet(H)){
-            alpha <- powers(H)+1
-            pn <- pnames(H)
-            s <- size(H)
-        } else { # hyper2, but not dirichlet
-            stop("hyper2 object supplied but is not a Dirichlet distribution")
-        }
+        stopifnot(is.dirichlet(H))
+        alpha <- setNames(sapply(seq_len(size(H)), function(i){powers(H[pnames(H)[i]])}), pnames(H)) + 1
+        pn <- pnames(H)
+        s <- size(H)
     } else {   # H is vector of alpha
         pn <- names(H)
         s <- length(H)
         alpha <- H
     }
-    out <- t(apply(matrix(rgamma(n*s,shape=alpha),s,n),2,function(x){x/sum(x)}))
+    out <- t(apply(matrix(rgamma(n*s, shape=alpha), s, n), 2, function(x){x/sum(x)}))
     colnames(out) <- pn
     return(out)
 }
@@ -1160,7 +1069,7 @@ rorder_single <- function(p){
     
 `discard_flawed2` <- function(x, unwanted,...){
     if(is.character(unwanted)){
-        wanted <- !which(rownames(x)==unwanted)
+        wanted <- !which(rownames(x) == unwanted)
     }
     o <- wikitable_to_ranktable(x,...) # was   o <- ordertable_to_ranktable(x)
     class(o) <- "matrix"
@@ -1170,25 +1079,39 @@ rorder_single <- function(p){
     return(ranktable_to_ordertable(o))
 }
 
+`ordertable` <- function(x){
+    x <- as.matrix(x)
+    if(is.null(rownames(x))){stop("rownames must be supplied")}
+    ## This is the only place class ordertable is set:
+    class(x) <- c("ordertable", "matrix")
+    return(x)
+}
+
+`print.ordertable` <- function(x, ...){
+    cat("An ordertable:\n")
+    print(noquote(unclass(x)))
+}
+
 `as.ordertable` <- function(w){
+    if(is.ranktable(w)){return(ranktable_to_ordertable(w))}
     out <-
         apply(w,2,    
               function(x){ # 'x' is a column of w
                   out <- suppressWarnings(as.numeric(x))  # 'ret' etc -> NA
                   no <- is.na(out)
                   o <- out[!no]
-                  o[o>0] <- rank(o[o>0])
+                  o[o > 0] <- rank(o[o > 0])
                   out[!no] <- o
                   out[no] <- 0
                   return(out)
               } )
     rownames(out) <- rownames(w)
-    return(out)
+    return(ordertable(out))
 }
 
 `ordertable2points` <- function(o,points,totals=TRUE){
     points <- c(points,rep(0,1+max(o)-length(points)))
-    o[o==0] <- length(points)
+    o[o == 0] <- length(points)
     o[] <- points[o]
     if(totals){
         return(rowSums(o))
@@ -1202,19 +1125,19 @@ rorder_single <- function(p){
     if(missing(players)){
       return(x[order(names(x))])
     } else {
-      if(is.hyper2(players) | is.hyper3(players)){
+      if(is.hyper2(players) || is.hyper3(players)){
         players <- pnames(players)
       }
     }
       
     stopifnot(length(x) == length(players))
     stopifnot(all(sort(names(x)) == sort(players)))
-    stopifnot(all(table(names(x))==1))
+    stopifnot(all(table(names(x)) == 1))
     x[apply(outer(players,names(x),`==`),1,which)]
 }
 
 `ordertransplot` <- function(ox,oy, plotlims, ...){
-  stopifnot(all(sort(names(ox))==sort(names(oy))))
+  stopifnot(all(sort(names(ox)) == sort(names(oy))))
   ox <- ordertrans(ox)
   oy <- ordertrans(oy)
   par(pty='s') # square plot
@@ -1277,10 +1200,11 @@ rorder_single <- function(p){
         rownames(M) <- paste("p",seq_len(nrow(M)),sep="_")
         colnames(M) <- rownames(M)
     }
+    out <- dirichlet(rowSums(M))
+    out[rownames(M)] <- 0
     jj <- M + t(M)
-    
     index <- which(upper.tri(M),arr.ind=TRUE)
-    dirichlet(rowSums(M)) - hyper2(apply(index,1,function(x){rownames(M)[x]},simplify=FALSE),jj[index])
+    return(out - hyper2(apply(index,1,function(x){rownames(M)[x]},simplify=FALSE),jj[index]))
 }
 
 `home_away` <- function (home_games_won, away_games_won){
@@ -1330,3 +1254,32 @@ rorder_single <- function(p){
     names(out) <- NULL
     return(out)
 }
+
+`home_away_table` <- function(a, give = FALSE, teams){
+    if(missing(teams)){ teams <- unique(c(a$hometeam, a$awayteam)) }
+    homewins <- matrix(0, length(teams), length(teams))
+    dimnames(homewins) <- list(`@home` = teams, `@away` = teams)
+    awaywins <- homewins
+    draws    <- homewins
+    for(i in seq_len(nrow(a))){
+        if(a$homescore[i] > a$awayscore[i]){ # home win
+            homewins[a$hometeam[i], a$awayteam[i]] %<>% add(1)
+        } else if(a$homescore[i] < a$awayscore[i]){  # away win
+            awaywins[a$hometeam[i], a$awayteam[i]] %<>% add(1)
+        } else { # draw
+            draws[a$hometeam[i], a$awayteam[i]] %<>% add(1)
+        }
+    }
+
+    diag(homewins) <- NA
+    diag(awaywins) <- NA
+    diag(draws)    <- NA
+    
+    if(give){
+        return(list(home_wins = homewins, away_wins = awaywins, draws = draws))
+    } else {
+        return(homewins + 1i*awaywins)
+    }
+}
+
+`[.ordertable` <- function(x, ...){ ordertable(apply(unclass(x)[...,], 2, rank)) }

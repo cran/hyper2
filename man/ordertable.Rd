@@ -1,6 +1,8 @@
 \name{ordertable}
 \alias{ordertable}
 \alias{order_table}
+\alias{print.ordertable}
+\alias{[.ordertable}
 \title{Order tables}
 \description{Order tables}
 \details{
@@ -9,10 +11,11 @@ The package makes extensive use of order tables and these are discussed
 here together with a list of order tables available in the package as
 data.  See also \code{ranktable.Rd}.
 
-Consider \code{pentathlon_table}:
+The prototypical ordertable would be \code{pentathlon_table}:
 
 \preformatted{
- > pentathlon_table
+> pentathlon_table
+An ordertable:
               shooting fencing swimming riding running
 Moiseev              5       1        1      6       5
 Zadneprovskis        6       2        5      5       1
@@ -67,7 +70,7 @@ to some variation on \dQuote{did not finish}.  Consider the \link{volvo}
 dataset:
 
 \preformatted{
-> volvo_table_2014
+> volvo_table
            leg1 leg2 leg3 leg4 leg5 leg6 leg7 leg8 leg9
 AbuDhabi      1    3    2    2    1    2    5    3    5
 Brunel        3    1    5    5    4    3    1    5    2
@@ -92,6 +95,11 @@ To coerce a table like the Volvo dataset shown above into an order table
 [that is, replace \code{DNS} with zeros, and also force nonzero entries
 to be contiguous], use \code{as.ordertable()}.
 
+There is an experimental extraction method which extracts certain rows
+of an ordertable; this is used in \code{inst/skating.Rmd}.
+
+
+
 }
 \author{Robin K. S Hankin}
 \seealso{
@@ -101,7 +109,7 @@ to be contiguous], use \code{as.ordertable()}.
 \examples{
 
 ordertable_to_ranktable(soling_table)
-ordertable2supp(soling_table) == soling  # should be TRUE
+suppfun(soling_table) == soling  # should be TRUE
 
 
 }

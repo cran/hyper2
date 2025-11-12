@@ -9,12 +9,13 @@
 }
 
 `hyper3_bw` <- function(B=list(), W=list(), powers=0,pnames){
-                                        # hyper3_bw(list(c("a","b"),c("b","c","e")),list(c(1,4),c(1,3,9)),1:2,letters[1:5]) 
+    ## hyper3_bw(list(c("a","b"),c("a","b","d")),list(c(1,4),c(1,3,4)),c(1,-1),letters[1:5])
   
     stopifnot(length(B) == length(W))
+    stopifnot(all(c(elements(W),recursive=TRUE) >= 0))
     stopifnot(all(unlist(lapply(B,length)) == unlist(lapply(W,length))))
 
-    if(length(powers)==1){powers <- rep(powers,length(B))}
+    if(length(powers) == 1){powers <- rep(powers,length(B))}
     if(missing(pnames)){pnames <- sort(unique(c(B ,recursive=TRUE)))}
     out <- identityL3(B,W,powers)  # the meat
     out$pnames <- pnames
@@ -50,7 +51,7 @@
     if(any(is.null(names(x)))){
         return(FALSE)
     }
-    if(any(x<0)){
+    if(any(x < 0)){
         return(FALSE)
     }
     return(TRUE)
@@ -64,8 +65,9 @@
     return(TRUE)
 }
 
-`pnv` <- function(x){ # "pnv" == "print method for named vectors"
-    paste(paste(names(x),unname(x),sep="="),collapse=", ")
+`pnv` <-function (x){ # "pnv" == "Print Named Vector"
+  f <- function(o){strsplit(capture.output(o)," ")[[1]][2]}
+  paste(paste(paste(names(x), sapply(unname(x), f), sep = "=")), collapse = ", ")
 }
 
 setGeneric("weights",function(object, ...){standardGeneric("weights")})
@@ -108,7 +110,7 @@ setGeneric("weights",function(object, ...){standardGeneric("weights")})
     b <- elements(as.namedvectorlist(x))
     p <- elements(powers(x))
     if(!isFALSE(getOption("give_warning_on_nonzero_power_sum"))){
-      if(sum(powers(x)) !=0){
+      if(sum(powers(x)) != 0){
           warning("powers have nonzero sum")
       }
     }
@@ -129,7 +131,7 @@ setGeneric("weights",function(object, ...){standardGeneric("weights")})
 
 `powers<-.hyper3` <- function(H,value){
     stopifnot(consistent(powers(H),value))
-    if(!is.disord(value) & length(value)>1){stop("replacement not defined")}
+    if(!is.disord(value) && length(value) > 1){stop("replacement not defined")}
     hyper3_nv(as.namedvectorlist(H),powers=value,pnames=pnames(H))
 }
 
@@ -267,7 +269,7 @@ char2nv <- function(x){
     value <- elements(value)
     stopifnot(is.numeric(value)) # coercion to integer is done in C
     stopifnot(is.vector(value))
-    if(length(value)==1){
+    if(length(value) == 1){
         value <- rep(value, length(index))
     }
     ## assigner3 <- function(L, W, p, L2, W2, value)
@@ -312,7 +314,7 @@ char2nv <- function(x){
 `loglik_single_redundant` <- function(p,H,log=TRUE){
   stopifnot(all(p>=0))
   if(length(p) == size(H)-1){
-    stopifnot(sum(p)<=1)
+    stopifnot(sum(p) <= 1)
     probs <- fillup(p)
   } else if(length(p) == size(H)){
     if(is.null(names(p))){stop("p==size(H), p must be a named vector")}
@@ -475,7 +477,7 @@ stop("not yet written")
         jj <- n[order(suppressWarnings(as.numeric(a[,i])),na.last=TRUE)]
         n_finishers    <- sum(!is.na(jj))
         n_nonfinishers <- sum( is.na(jj))
-        if(n_nonfinishers==0){ # technically not necessary:  "else" clause works for ==0
+        if(n_nonfinishers == 0){ # technically not necessary:  "else" clause works for == 0
             out <- out + ordervec2supp3(jj)
         } else { 
             out <- out + ordervec2supp3(jj[seq_len(n_finishers)],jj[n_finishers + seq_len(n_finishers)])
@@ -502,14 +504,14 @@ stop("not yet written")
 
 `args2ordervec` <- function(...){
     l <- list(...)
-    if(any(names(l) == "") & !all(names(l)=="")){
+    if(any(names(l) == "") && !all(names(l) == "")){
         stop("either name all of the arguments, or none of them")
     }
-    if(all(names(l)=="")){
+    if(all(names(l) == "")){
         names(l) <- paste("X",seq_len(nargs()),sep="")
     }
     x <- unlist(l,use.names=FALSE)
-    if(any(table(x)>1)){stop("ties not implemented")}
+    if(any(table(x) > 1)){stop("ties not implemented")}
     names(x) <- rep(names(l),lapply(l,length))
     return(names(sort(x)))
 }
@@ -528,7 +530,7 @@ stop("not yet written")
     stopifnot(identical(teams,rownames(away_games_won)))
     stopifnot(identical(teams,colnames(away_games_won)))
 
-    H <- hyper3(pnames=c(teams,"lambda"))
+    H <- hyper3(pnames=c(teams))
 
     for(i in seq_len(nrow(home_games_won))){
         for(j in seq_len(ncol(home_games_won))){
@@ -552,6 +554,59 @@ stop("not yet written")
 
                 ## denominator
                 jj <- c(lambda,1)
+                names(jj) <- c(home_team,away_team)
+                H[jj] %<>% dec(no_of_matches)
+            } # if(i != j) closes
+        } # j loop closes
+    } # i loop closes
+    return(H)
+}
+
+`home_draw_away3` <- function(home_games_won, drawn_games, away_games_won, lambda, D){
+
+    if(is.list(home_games_won)){
+        drawn_games    <- home_games_won[[3]]
+        away_games_won <- home_games_won[[2]]
+        home_games_won <- home_games_won[[1]]
+    }
+        
+    teams <- rownames(home_games_won)
+    stopifnot(identical(teams,colnames(home_games_won)))
+    stopifnot(identical(teams,rownames(away_games_won)))
+    stopifnot(identical(teams,colnames(away_games_won)))
+    stopifnot(identical(teams,rownames(drawn_games   )))
+    stopifnot(identical(teams,colnames(drawn_games   )))
+
+    H <- hyper3(pnames=c(teams))
+
+    for(i in seq_len(nrow(home_games_won))){
+        for(j in seq_len(ncol(home_games_won))){
+            if(i != j){  
+                home_team <- teams[i]
+                away_team <- teams[j]
+
+		home_wins <- home_games_won[i,j]
+		away_wins <- away_games_won[i,j] 
+                draws     <-    drawn_games[i,j]
+                no_of_matches <- home_wins + away_wins + draws
+
+                ## home wins:
+                jj <- lambda
+                names(jj) <- home_team
+                H[jj] %<>% inc(home_wins)
+                
+                ## away wins:
+                jj <- 1
+                names(jj) <- away_team
+                H[jj] %<>% inc(away_wins)
+
+                ## draws:
+                jj <- c(D,D)
+                names(jj) <- c(home_team,away_team)
+                H[jj] %<>% inc(draws)
+
+                ## denominator
+                jj <- c(D + lambda, D + 1)
                 names(jj) <- c(home_team,away_team)
                 H[jj] %<>% dec(no_of_matches)
             } # if(i != j) closes
@@ -617,9 +672,9 @@ stop("not yet written")
 }
 
 `sum.hyper3` <- function(x, ..., na.rm=FALSE){
-  if(nargs()==1){
+  if(nargs() == 1){
     return(x)
-  } else if (nargs()==2){
+  } else if (nargs() == 2){
     return(hyper3_add(x, ...))
   } else {
     return(hyper3_add(x, Recall(...)))
@@ -641,7 +696,7 @@ stop("not yet written")
         x <- hyper3_nv(
             lapply(as.namedvectorlist(x),
                    function(p){
-                       p[names(p)==index[i]] <- value[i] # The meat
+                       p[names(p) == index[i]] <- value[i] # The meat
                        return(p)
                    }),
             powers=powers(x),
@@ -649,3 +704,23 @@ stop("not yet written")
     }
     return(x)
 }
+
+`dirichlet3` <- function(powers, lambda=NULL){
+    if(is.null(names(powers))){
+        stop("dirichlet3d() requires powers to be a _named_ vector")
+    }
+    if(!is.null(names(lambda)) & !identical(names(lambda),names(powers))){
+        stop("names(lambda) must match names(powers), if supplied")
+    }
+    if(length(lambda) < length(powers)){
+        lambda <- c(lambda,rep(1,length(powers)-length(lambda)))
+    }
+
+    out <- hyper3()
+    for(i in seq_along(powers)){
+        out[setNames(lambda[i],names(powers)[i])] %<>% inc(powers[i])
+    }
+    out[setNames(lambda,names(powers))] %<>% dec(sum(powers))
+    return(out)
+}
+

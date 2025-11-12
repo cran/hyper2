@@ -3,6 +3,8 @@
 \alias{zermelo}
 \alias{home_away}
 \alias{home_away3}
+\alias{home_draw_away3}
+\alias{home_away_table}
 \alias{white_draw}
 \alias{white_draw3}
 \title{Pairwise comparisons}
@@ -10,7 +12,7 @@
 
   Function \code{pairwise()} takes a matrix of pairwise comparisons and
   returns a \code{hyper2} likelihood function.  Function
-  \code{zermelo()} gives a standard iterative procedure for likelihood
+  \code{zermelo()} implements a standard iterative procedure for
   maximization of pairwise Bradley-Terry likelihoods (such as those
   produced by function \code{pairwise()}).
 
@@ -20,6 +22,16 @@
   same, but returns a \code{hyper3} object.  A complex matrix is
   interpreted as real parts being the home wins and imaginary parts away
   wins.
+
+  Function \code{home_away_table()} takes a dataframe of results (each
+  row being a single match) and returns a table amenable to analysis by
+  \code{home_away()} or \code{home_away3()}.  If \code{give} takes its
+  default value of \code{FALSE}, draws are discarded and a complex
+  matrix of wins and losses is returned.  Files
+  \code{inst/monster_vs_lambda.Rmd} and \code{inst/home_advantage.Rmd}
+  show some use-cases.  Argument \code{teams} is a character vector that
+  specifies the teams to be tabulated (useful if one wishes to change
+  the default ordering of the teams).
 
   Function \code{white_draw3()} returns a \code{hyper3} likelihood
   function for pairwise comparisons, one of whom has a home team-type
@@ -34,6 +46,7 @@ pairwise(M)
 zermelo(M, maxit = 100, start, tol = 1e-10, give = FALSE)
 home_away(home_games_won, away_games_won)
 home_away3(home_games_won, away_games_won,lambda)
+home_away_table(a, give=FALSE, teams)
 white_draw3(A,lambda,D)
 }
 \arguments{
@@ -42,8 +55,9 @@ white_draw3(A,lambda,D)
   \item{start}{Starting value for iteration; if missing, use
     \code{equalp()}}
   \item{tol}{Numerical tolerance for stopping criterion}
-  \item{give}{Boolean with default \code{FALSE} meaning to return the
-    evaluate and \code{TRUE} meaning to return all iterations}
+  \item{give}{In \code{zermelo()}, Boolean with default \code{FALSE}
+    meaning to return the evaluate and \code{TRUE} meaning to return all
+    iterations; in \code{home_away_table()} governs output form}
   \item{home_games_won, away_games_won}{Matrices showing home games won
     and away games won}
   \item{lambda}{The home ground advantage
@@ -53,6 +67,10 @@ white_draw3(A,lambda,D)
   corresponding to white wins, white draws, and white losses for
   \code{i=1,2,3}.  The canonical example would be \code{kka_array},
   see \code{inst/kka.Rmd} for details}
+  \item{a, teams}{In function \code{home_away_table()}, argument
+    \code{a} is a data frame (typically of football results),
+    \code{give} a boolean governing output form, and \code{teams} a list
+    of football teams.  See details}
 }
 \details{
   In function \code{zermelo()}, the diagonal is disregarded.
@@ -84,6 +102,11 @@ An extended discussion of \code{pairwise()} is given in
 \code{home_away()} and \code{home_away3()} are described and used in
 \code{inst/home_advantage.Rmd}; see Davidson and Beaver 1977.
 
+Experimental function \code{pair3()} is now removed as
+  \code{dirichlet3()} is more general and has nicer idiom;
+  \code{pair3(a=4, b=3, lambda=1.88)} and \code{dirichlet3(c(a=4, b=3),
+  1.88)} give identical output.
+
 }
 \seealso{\code{\link{maxp}}}
 \examples{ #Data is the top 5 players from Borozki's table 1
@@ -102,7 +125,6 @@ M
 pairwise(M)
 zermelo(M)
 # maxp(pairwise(M))  # should be identical (takes ~10s to run)
-
 
 M2 <- matrix(c(NA,19+2i,17,11+2i,16+5i,NA,12+4i,12+6i,12+2i,19+10i,
 NA,12+4i,11+2i,16+2i,11+7i,NA),4,4)

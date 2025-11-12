@@ -1,4 +1,4 @@
-## ----setup, include=FALSE-----------------------------------------------------
+## ----setup, include=FALSE---------------------------------
 library("hyper2",quietly=TRUE)
 set.seed(0)
 knitr::opts_chunk$set(echo = TRUE)
@@ -6,32 +6,32 @@ knitr::opts_chunk$set(echo = TRUE)
 ## ----label="hexsticker",out.width='20%', out.extra='style="float:right; padding:10px"',echo=FALSE----
 knitr::include_graphics(system.file("help/figures/hyper2.png", package = "hyper2"))
 
-## ----label=loadlib------------------------------------------------------------
+## ----label=loadlib----------------------------------------
 library("hyper2",quietly=TRUE)
 M <- icons_table # saves typing
 M
 
-## ----showicons----------------------------------------------------------------
+## ----showicons--------------------------------------------
 icons
 icons == saffy(icons_table)  # should be TRUE
 
-## ----estmaxlike,cache=TRUE----------------------------------------------------
+## ----estmaxlike,cache=TRUE--------------------------------
 options("digits" = 4)
 (mic <- maxp(icons))
 dotchart(mic,pch=16)
 
-## ----calclog------------------------------------------------------------------
+## ----calclog----------------------------------------------
 L1 <- loglik(indep(mic),icons)
 options(digits=9)
 L1
 
-## ----doequalp,cache=TRUE------------------------------------------------------
+## ----doequalp,cache=TRUE----------------------------------
 equalp.test(icons)
 
-## ----dospecificp,cache=TRUE---------------------------------------------------
+## ----dospecificp,cache=TRUE-------------------------------
 specificp.test(icons,1)
 
-## ----largestoffive,cache=TRUE-------------------------------------------------
+## ----largestoffive,cache=TRUE-----------------------------
 o <- function(Ul,Cl,startp,give=FALSE){
     small <- 1e-4  #  ensure start at an interior point
     if(missing(startp)){startp <- small*(1:5)+rep(0.1,5)}			
@@ -49,16 +49,16 @@ p4max <- o(c(-1, 0, 0, 1, 0), 0)  # p1 <= p4
 p5max <- o(c(-1, 0, 0, 0, 1), 0)  # p1 <= p5
 p6max <- o(c(-2,-1,-1,-1,-1),-1)  # p1 <= p6 (fillup)
 
-## ----pnmax--------------------------------------------------------------------
+## ----pnmax------------------------------------------------
 likes <- c(p2max,p3max,p4max,p5max,p6max)
 likes
 ml <- max(likes) 
 ml
 
-## ----extralike----------------------------------------------------------------
+## ----extralike--------------------------------------------
 L1-ml
 
-## ----evalworth,cache=TRUE-----------------------------------------------------
+## ----evalworth,cache=TRUE---------------------------------
 o2 <- function(Ul,Cl){
   jj <-o(Ul,Cl,give=TRUE)
   out <- c(jj[[1]],1-sum(jj[[1]]),jj[[2]])
@@ -73,14 +73,14 @@ o2(c(-1, 0, 0, 0, 1), 0),  # p1 <= p5
 o2(c(-2,-1,-1,-1,-1),-1)   # p1 <= p6
 )
 
-## ----lowfreq,cache=TRUE-------------------------------------------------------
+## ----lowfreq,cache=TRUE-----------------------------------
 jj <- o(c(-1,-1,-1,-1,0) , -2/3, give=TRUE,start=indep((1:6)/21))$value
 jj
 
-## ----extralowfreq-------------------------------------------------------------
+## ----extralowfreq-----------------------------------------
 L1-jj
 
-## ----ofcourse,cache=TRUE------------------------------------------------------
+## ----ofcourse,cache=TRUE----------------------------------
 small <- 1e-4
 start <- indep(c(small,small,small,small,0.5-2*small,0.5-2*small))
 jj <- c(
@@ -96,12 +96,12 @@ jj <- c(
    )
 jj
 
-## ----maxjj--------------------------------------------------------------------
+## ----maxjj------------------------------------------------
 max(jj)
 
-## ----extraofcourse------------------------------------------------------------
+## ----extraofcourse----------------------------------------
 L1-max(jj)
 
-## ----lookatmax,cache=TRUE-----------------------------------------------------
+## ----lookatmax,cache=TRUE---------------------------------
 o(c( 0, 0, 0,-1, 1), 0,give=TRUE,start=start)
 
