@@ -5,6 +5,7 @@
 \packageTitle{hyper2}
 }
 \description{
+  \if{html}{\figure{hyper2.png}{options: style='float: right' alt='logo' width='120'}}
 \packageDescription{hyper2}
 }
 \details{
@@ -17,6 +18,10 @@ The DESCRIPTION file:
   computationally efficient method than the \pkg{hyperdirichlet}
   package.  The software is designed for the analysis of order
   statistics and team games.
+
+  There are several vignettes that come with the package: see
+  \href{https://robinhankin.github.io/hyper2/}{the io readme} (under
+  \sQuote{articles}), or listed by \code{vignette(package = "hyper2")}.
 
   The hex sticker features the \dQuote{draw monster}, a concept
   introduced in Hankin (2020) as a reified entity, representing the

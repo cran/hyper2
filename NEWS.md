@@ -1,3 +1,34 @@
+# hyper2 3.2-3
+
+* advantage()
+
+
+
+# hyper2 3.2-2
+
+* attemptstable functionality
+* more track and field datasets
+* Functionality to alter and/or nullify the monster in home_away()
+* pick/pass/beats/loses
+* more overloading of "+"
+* bugfixes
+* improvements to documentation
+
+
+# hyper2 3.2-1
+
+* multinom()
+* pwa3()
+* bugfixes
+* improved vignettes
+* ranktable_to_ordertable()
+
+# hyper2 3.2
+
+* rationalisation: suppfun() is now generic
+
+
+
 # hyper2 3.1-0
 
 * consistent handling of non-zero-sum powers 

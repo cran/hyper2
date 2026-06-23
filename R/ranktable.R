@@ -1,6 +1,6 @@
-`print.ranktablesummary` <- function(x,...){
+`print.ranktablesummary` <- function(x, ...){
     x <- unclass(x)
-    x <- cbind(x[,1:3],"...",x[,ncol(x)+c(-1,0)])
+    x <- cbind(x[,1:3], "...", x[,ncol(x) + c(-1,0)])
     x <- noquote(x)
     print(x)
     class(x) <- NULL
@@ -13,7 +13,10 @@
 }
 
 `ranktable_to_ordertable` <- function(xrank){
-    stop("not yet implemented.\nIt is harder than it looks.\nI'll get round to it one day.\nProbably.")
+    out <- apply(xrank, 1, order)
+    rownames(out) <- sort(unique(as.vector(xrank)))
+    colnames(out) <- rownames(xrank)
+    return(as.ordertable(out))
 }
 
 `ordertable_to_ranktable` <- function(xorder){
@@ -42,7 +45,7 @@ setGeneric("as.ranktable", function(x){standardGeneric("as.ranktable")})
     stopifnot(is.matrix(x))
     stopifnot(is.character(x))
     stopifnot(all(apply(x, 1, table) == 1))
-    colnames(x) <- paste("c",seq_len(ncol(x)),sep="")
+    colnames(x) <- paste("c", seq_len(ncol(x)),sep="")
     class(x) <- "ranktable"  # this is the only place yadda yada ya
     return(x)
 }

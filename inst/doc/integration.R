@@ -92,5 +92,3 @@ obj <- function(p){-loglik(p,H)}   # objective func
 gr  <- function(p){-gradient(H,p)} # gradient, needed for speed
 UI <- rbind(diag(3),-1)           # UI and CI specify constraints
 CI <- c(rep(0,3),-1)              # p_i >= 0 and sum p_i <= 1
-
-

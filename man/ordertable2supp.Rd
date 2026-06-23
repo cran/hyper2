@@ -7,12 +7,12 @@
 \title{Translate order tables to support functions}
 \description{
 
-Function \code{ordertable2supp()} is discouraged: use [\code{S3} generic]
-\code{suppfun()} instead.
-
+  Translate order statistics to support functions using Plackett-Luce
+  likelihoods.
+  
 }
 \usage{
-ordertable2supp(x, noscore, incomplete=TRUE)
+ordertable2supp(x, noscore, noninformative, incomplete=TRUE)
 ordervec2supp(d)
 }
 \arguments{
@@ -25,10 +25,18 @@ ordervec2supp(d)
     not place} irregardless].  The default \code{TRUE} allows for gaps.
     This is useful if we are considering the first few lines of an
     ordertable because there might be missing ranks.}
-  \item{noscore}{Character vector giving the abbreviations
-    for a non-finishing status such as \dQuote{did not finish}
-    or \dQuote{disqualified}.  A missing argument is interpreted as 
-    \code{c("Ret", "WD", "DNS", "DSQ", "DNP", "NC")}}
+
+  \item{noscore}{Character vector giving the abbreviations for a
+    non-finishing status such as \dQuote{did not finish} or
+    \dQuote{disqualified}.  A missing argument is interpreted as
+    \code{c("Ret", "WD", "DNS", "DSQ", "DNP", "NC", "DNQ", "EX",
+      "Sick")}.  A non-finishing status is equivalent to coming (joint)
+    last}
+  \item{noninformative}{As for \code{noscore}, a character vector giving
+    abbreviations for noninformative statuses.  For example, in the 2025
+    MotoGP world championship, Marc Marquez declined to compete in the
+    last four races on the grounds that he already had enough points to
+    guarantee victory}
 }
 \details{
 
@@ -39,6 +47,9 @@ sports.  Prepared text versions are available in the package in the
 \code{inst/} directory, for example \code{inst/motoGP_2019.txt}.  Use
 \code{read.table()} to create a data frame which can be interpreted by
 \code{ordertable2supp()}.
+
+Function \code{ordertable2supp()} in day-to-day use is discouraged: use
+[\code{S3} generic] \code{suppfun()} instead.
 
 Function \code{ordervec2supp()} takes an order vector \code{d} and
 returns the corresponding Plackett-Luce loglikelihood function as a
@@ -97,6 +108,8 @@ is obsolete in the name paradigm.  A short vignette applying
 dataset of the \CRANpkg{prefmod} package [and further analysed in the
 \CRANpkg{PlackettLuce} package] is presented at \code{inst/salad.Rmd}.
 
+The \code{noninformative} argument is discussed at
+\code{inst/curling.Rmd} and \code{inst/noninformative.Rmd}.
 
 }
 
@@ -126,7 +139,15 @@ suppfun(ordertable(x), incomplete=FALSE)           # use this instead
 ordertable2supp(x[1:4,])   
 
 
+## The "noninformative" argument [defaulting to c("dead", "won")] means
+## to disregard that competitor:
 
+x1 <- data.frame(x=c("won",1:3), row.names=letters[1:4])
+ordertable2supp(x1)
+
+## Compare
+x2 <- data.frame(x=c("DNS",1:3), row.names=letters[1:4])
+ordertable2supp(x2)
 
 
 ## Function ordervec2supp() is lower-level, used for order vectors:
@@ -147,7 +168,7 @@ H2 <- ordervec2supp(a1) + ordervec2supp(a2) + ordervec2supp(a4)
 ## and 'e' did not compete, but in H2, 'd' and 'e' did not finish (and
 ## notionally came last):
 
-pmax(H1)
-pmax(H2)   # d,e not finishing affects their estimated strength
+# pmax(H1)
+# pmax(H2)   # d,e not finishing affects their estimated strength
 
 }

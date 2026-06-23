@@ -23,8 +23,9 @@ rp(n, H, startp = NULL, fcm = NULL, fcv = NULL, SMALL = 1e-06, l=loglik, fillup=
 }
 \details{
 
-  Uses the implementation of Metropolis-Hastings from the \code{MCE}
-  package to sample from the posterior PDF of a \code{hyper2} object.
+  Uses the implementation of Metropolis-Hastings from the
+  \CRANpkg{MCE} package to sample from the posterior PDF of a
+  \code{hyper2} object.
 
   If the distribution is Dirichlet, use \code{rdirichlet()} to generate
   random observations: it is much faster, and produces serially
@@ -46,7 +47,8 @@ rp(n, H, startp = NULL, fcm = NULL, fcv = NULL, SMALL = 1e-06, l=loglik, fillup=
 }
 \seealso{\code{\link{maxp}},\code{\link{loglik}},\code{\link{dirichlet}},\code{\link{rhyper2}}}
 \examples{
-rp(10,icons)
-
-plot(loglik(rp(30,icons),icons),type='b')
+x <- rp(50, icons)  # try more than 50
+matplot(x, type = "l")
+matplot(t(x), type = "l")
+plot(loglik(x, icons), type='b')
 }

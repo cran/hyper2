@@ -32,8 +32,9 @@ rorder_single(p)
 \value{
 
 Random rank observations.  Function \code{rrank()}, with no arguments,
-returns a small get-you-going example of a ranktable object.  Function
-\code{rrankk()} returns a bigger and more complicated object.
+returns a small get-you-going example of a ranktable object [see
+\code{ranktable.Rd}].  Function \code{rrankk()} returns a bigger and
+more complicated object.
 
 If \code{n=1}, \code{rrank()} returns a vector; if \code{n>1} it returns
 a matrix with \code{n} rows, each corresponding to a ranking.  The
@@ -103,6 +104,9 @@ Note that function \code{rrank()} returns an object of class
 \dQuote{\code{rrank}}, which has its own print method.  This can be
 confusing.  Further details are given at \code{ranktable.Rd}.
 
+You can coerce a rank table to an ordertable with
+\code{as.ordertable()}.
+
 Function \code{rrank_single()} is a low-level helper function:
 
 \preformatted{
@@ -112,7 +116,7 @@ Function \code{rrank_single()} is a low-level helper function:
 }
 
 Above, we see from \code{p} that competitor 3 is the strongest, coming
-first with 92\% probability.  And indeed the resulting rank statistic
+first with probability 0.9.  And indeed the resulting rank statistic
 given by \code{rorder_single()} shows competitor 3 coming first, 2
 coming second, and so on.  Compare \code{rorder_single()}:
 
@@ -122,20 +126,22 @@ coming second, and so on.  Compare \code{rorder_single()}:
 > 
 }
 
-Above we see see from \code{rrank_single(p)} that competitor 1 came
-sixth, competitor 2 came third, and competitor 3 came first (as you
-might expect, as competitor 3 is the strongest).  Note that the R idiom
-for \code{rorder_single()} is the same as that used in the
-\CRANpkg{permutations} package for inverting a permutation: \code{o[o] <-
-seq_along(o)}.
+Above we see, reading elements of \code{rorder_single(p)} sequentially,
+that competitor 1 came sixth, competitor 2 came third, and competitor 3
+came first (as you might expect, as competitor 3 is the strongest).
+
+Note that the R idiom for \code{rorder_single()} is the same as that
+used in the \CRANpkg{permutations} package for inverting a permutation:
+\code{o[o] <- seq_along(o)}.
 
 }
 \author{Robin K. S. Hankin}
-\note{Similar functionality is given by \code{rrace()}, documented at
+\note{Similar functionality is given by \code{rrace3()}, documented at
   \link{rhyper3}.
 }
 \seealso{
   \code{\link{ordertrans}},
+  \code{\link{ranktable}},
   \code{\link{suppfun}},
   \code{\link{skating}},
   \code{\link{rhyper3}}
@@ -146,6 +152,10 @@ rrank_single(zipf(9))
 
 ptrue <- (4:1)/10
 names(ptrue) <- letters[1:4]
+
+rrank()
+as.ordertable(rrank())
+
 rrank(10,p=ptrue)
 
 H <- suppfun(rrank(10,p=ptrue))

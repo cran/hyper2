@@ -22,18 +22,27 @@ wikitable_to_ranktable(wikitable, strict=FALSE)
 \method{print}{ranktablesummary}(x,...)
 }
 \arguments{
-  \item{x,xrank,object}{A rank table, an object with class
+  \item{x, xrank, object}{A rank table, an object with class
     \code{ranktable}, for example the value of \code{rrank()}}
-  \item{xorder,wikitable}{Order tables.  Argument \code{wikitable}
+  \item{xorder, wikitable}{Order tables.  Argument \code{wikitable}
     refers to a generalized order table which can include entries such
     as DNF signifying did not finish.}
   \item{strict}{Controls for \code{wikitable_to_ranktable()}}
   \item{...}{Further arguments (currently ignored)}  
 }
 \details{
-Function \code{ranktable_to_ordertable()} is trivial;
-\code{ordertable_to_ranktable()} less so.  The prototype for order
-tables would be \code{skating_table}. 
+
+  Function \code{ranktable_to_ordertable()} uses \code{order()} to
+  convert a ranktable object to an ordertable. Note that the rows of of
+  the resulting ordertable will be in alphabetic order.  The prototype
+  for order tables would be \code{skating_table}; to convert to
+  ranktable form and back to ordertable, use:
+
+  \preformatted{ranktable_to_ordertable(ordertable_to_ranktable(skating_table))}
+
+  or
+
+  \preformatted{as.ordertable(as.ranktable(skating_table))}
 
 Function \code{ordertable_to_ranktable(x)} checks for each column being
 a permutation of \code{seq_len(nrow(x))} and, if not, it stops.  In
@@ -60,8 +69,10 @@ interpretation of the internal structure of \code{ranktable} objects.
 
 p <- (5:1)/15
 names(p) <- letters[1:5]
-xrank <- rrank(12,p,rnames=month.abb)
+xrank <- rrank(12, p, rnames=month.abb)
 
+pentathlon_table  # an ordertable
+as.ranktable(pentathlon_table) # coerce to a ranktable
 
 }
 

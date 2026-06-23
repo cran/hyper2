@@ -9,19 +9,57 @@
 \alias{white_draw3}
 \title{Pairwise comparisons}
 \description{
+  Convenience functions to generate likelihoods for pairwise
+  comparisons.
+}
+\usage{
+pairwise(M)
+zermelo(M, maxit = 100, start, tol = 0, give = FALSE)
+home_away(home_games_won, away_games_won, monster="home")
+home_away3(home_games_won, away_games_won, lambda)
+home_away_table(a, give=FALSE, teams)
+white_draw3(A, lambda, D)
+}
+\arguments{
+  \item{M}{Matrix of pairwise comparison results}
+  \item{maxit}{Maximum number of iterations}
+  \item{start}{Starting value for iteration; if missing, use
+    \code{equalp()}}
+  \item{tol}{Numerical tolerance for stopping criterion}
+  \item{give}{In \code{zermelo()}, Boolean with default \code{FALSE}
+    meaning to return the evaluate and \code{TRUE} meaning to return all
+    iterations; in \code{home_away_table()} governs output form}
+  \item{home_games_won, away_games_won}{Matrices showing home games won
+    and away games won}
+  \item{monster}{The monster, with default \code{home} representing
+    the home ground advantage}
+  \item{lambda}{The home ground advantage
+    (or white advantage in chess)}
+  \item{D}{Weight of draw}
+  \item{A}{Array of dimension \code{n*n*3}, with \code{A[,,i]}
+  corresponding to white wins, white draws, and white losses for
+  \code{i=1,2,3}.  The canonical example would be \code{kka_array},
+  see \code{inst/kka.Rmd} for details}
+  \item{a, teams}{In function \code{home_away_table()}, argument
+    \code{a} is a data frame (typically of football results),
+    \code{give} a boolean governing output form, and \code{teams} a list
+    of football teams.  See details}
+}
+\details{
 
-  Function \code{pairwise()} takes a matrix of pairwise comparisons and
-  returns a \code{hyper2} likelihood function.  Function
-  \code{zermelo()} implements a standard iterative procedure for
-  maximization of pairwise Bradley-Terry likelihoods (such as those
-  produced by function \code{pairwise()}).
+  Function \code{pairwise(M)} takes a \code{M}, a matrix of pairwise
+  comparisons and returns a \code{hyper2} likelihood function.  If there
+  are only two competitors, so \code{M} is 2-by-2, it might be better to
+  use \code{dirichlet()} or \code{race()} with 2 players, or one of 
+  the \code{pick()} quartet.
 
   Function \code{home_away()} takes two matrices, one for home wins and
   one for away wins.  It returns a \code{hyper2} support function that
-  includes a home advantage ghost.  Function \code{home_away3()} is the
-  same, but returns a \code{hyper3} object.  A complex matrix is
-  interpreted as real parts being the home wins and imaginary parts away
-  wins.
+  includes a home advantage monster [or indeed any systematic
+  advantage].  Set the monster to \code{NULL} if the home advantage is
+  not present.  Function \code{home_away3()} is the same, but returns a
+  \code{hyper3} object.  A complex matrix is interpreted as real parts
+  being the home wins and imaginary parts away wins.
 
   Function \code{home_away_table()} takes a dataframe of results (each
   row being a single match) and returns a table amenable to analysis by
@@ -39,46 +77,20 @@
   work with an array of dimensions \eqn{n\times n\times 3}{n*n*3},
   where \eqn{n} is the number of players.  It is used in
   \code{inst/kka.Rmd} to create \code{chess3} likelihood function.
-      
-}
-\usage{
-pairwise(M)
-zermelo(M, maxit = 100, start, tol = 1e-10, give = FALSE)
-home_away(home_games_won, away_games_won)
-home_away3(home_games_won, away_games_won,lambda)
-home_away_table(a, give=FALSE, teams)
-white_draw3(A,lambda,D)
-}
-\arguments{
-  \item{M}{Matrix of pairwise comparison results}
-  \item{maxit}{Maximum number of iterations}
-  \item{start}{Starting value for iteration; if missing, use
-    \code{equalp()}}
-  \item{tol}{Numerical tolerance for stopping criterion}
-  \item{give}{In \code{zermelo()}, Boolean with default \code{FALSE}
-    meaning to return the evaluate and \code{TRUE} meaning to return all
-    iterations; in \code{home_away_table()} governs output form}
-  \item{home_games_won, away_games_won}{Matrices showing home games won
-    and away games won}
-  \item{lambda}{The home ground advantage
-    (or white advantage in chess)}
-  \item{D}{Weight of draw}
-  \item{A}{Array of dimension \code{n*n*3}, with \code{A[,,i]}
-  corresponding to white wins, white draws, and white losses for
-  \code{i=1,2,3}.  The canonical example would be \code{kka_array},
-  see \code{inst/kka.Rmd} for details}
-  \item{a, teams}{In function \code{home_away_table()}, argument
-    \code{a} is a data frame (typically of football results),
-    \code{give} a boolean governing output form, and \code{teams} a list
-    of football teams.  See details}
-}
-\details{
-  In function \code{zermelo()}, the diagonal is disregarded.
 
   If \code{home_games_won} is complex, then the real parts of the
   entries are interpreted as home games won, and the imaginary parts as
   away games won.
-  
+
+  Function \code{zermelo()} implements a standard iterative procedure
+  for maximization of pairwise Bradley-Terry likelihoods (such as those
+  produced by function \code{pairwise()}).  It takes a matrix of
+  pairwise comparisons; the diagonal is disregarded.  The process keeps
+  going until the difference between successive estimates does not
+  exceed argumet \code{tol}; note that \code{tol=0} is acceptable.  If
+  \code{give=TRUE}, a matrix with rows corresponding to successive
+  approximations is returned; if so, argument \code{maxit} corresponds
+  to the maximum number of rows.
 }
 \references{
   \itemize{
@@ -131,6 +143,7 @@ NA,12+4i,11+2i,16+2i,11+7i,NA),4,4)
 teams <- LETTERS[1:4]
 dimnames(M2) <- list("@home" = teams,"@away"=teams)
 home_away(M2)
+home_away(M2, monster = NULL) # nullify the home ground monster
 # home_away3(M2,lambda=1.2)  # works but takes too long (~3s)
 home_away3(M2[1:3,1:3],lambda=1.2) 
 

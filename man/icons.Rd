@@ -18,14 +18,17 @@
   The columns correspond to the different stimulus icons used, detailed
   below.  An extensive discussion is given in West and Hankin 2008, and
   Hankin 2010; an updated analysis is given in the \code{icons}
-  vignette.
+  vignette.  
 
   Object \code{icons} is the corresponding likelihood function, which
-  can be created with \code{saffy(icons_matrix)}.
+  can be created with \code{saffy(icons_table)}.  It is used in
+  \code{inst/ternaryplot_hyper2.Rmd}, which shows a ternary plot of
+  random samples.
 
-  The object is used in \code{inst/ternaryplot_hyper2.Rmd} which shows a
-  ternary plot of random samples.
-  
+  File \code{inst/icons.Rmd} creates the objects documented here and
+  includes some technical discussion.  In addition, there is a detailed
+  vignette, \code{icons}, provided with the package: to see it, type
+  \code{vignette("icons")} at the command line.
 }
 \usage{data(icons)}
 \details{

@@ -7,20 +7,11 @@
 \title{Random hyper3 objects}
 \description{
 
-  Various random hyper3 objects, in the context of the race metaphor.
-  They return \dQuote{get you going} examples of \code{hyper3} objects.
-  The defaults are simple but non-trivial and have straightforward
-  interpretations.
+  Various random \code{hyper3} objects, in the context of the race
+  metaphor.  They return \dQuote{get you going} examples of
+  \code{hyper3} objects.  The defaults are simple but non-trivial and
+  have straightforward interpretations.
 
-  The defaults are
-
-  \preformatted{
-
- pn: c(a=2,   b=4,   c=2,   d=1  )  # numbers (two "a"s, four "b"s etc)
- ps: c(a=0.3, b=0.1, c=0.2, d=0.4)  # strengths
-}
-
-  
 }
 \usage{
 rwinner3(pn = c(a=2, b=4, c=2, d=1), ps = c(a=0.3, b=0.1, c=0.2, d=0.4))
@@ -32,7 +23,7 @@ rhyper3(n=5, s=4, type='race', ...)
 \arguments{
   \item{pn}{A named integer vector showing numbers of each type of player}
   \item{ps}{A named vector showing strengths of each type of player}
-  \item{n,size,races,s,type}{Arguments specifying the complexity 
+  \item{n, size, races, s, type}{Arguments specifying the complexity 
     of the random \code{hyper3} object returned.  See details}
   \item{lambda}{Parameter}
   \item{...}{Further arguments passed to \code{rracehyper3()} or
@@ -66,13 +57,17 @@ rhyper3(n=5, s=4, type='race', ...)
 
    \item Function \code{rhyper3()} returns an even more complicated
    \code{hyper3} object corresponding to repeated races and pairwise
-   comparisons.
-}
+   comparisons.  The defaults are
 
+  \preformatted{
+
+   pn: c(a=2,   b=4,   c=2,   d=1  )  # numbers (two "a"s, four "b"s etc)
+   ps: c(a=0.3, b=0.1, c=0.2, d=0.4)  # strengths
+   }
+}
   Argument \code{n} generally specifies the number of distinct types of
   players.  Files \code{inst/mann_whitney_wilcoxon.Rmd} and
   \code{inst/javelin.Rmd} show some use-cases for these functions.
-
 }
 \author{Robin K. S. Hankin}
 \note{
@@ -92,6 +87,6 @@ rhyper3()
 rpair3()
 ordervec2supp3(rrace3())
 
-table(replicate(100,which(rrace3(pn=c(a=1,b=10),ps=c(a=0.9,b=0.1))=='a')))
+table(replicate(100, which(rrace3(pn=c(a=1,b=10),ps=c(a=0.9,b=0.1)) == 'a')))
 
 }

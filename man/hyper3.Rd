@@ -16,15 +16,32 @@
 \alias{overwrite_lowlevel3}
 \alias{powers<-.hyper3}
 \alias{pnames<-.hyper3}
-\alias{weights}
-\alias{weights.hyper3}
-\alias{setweight}
-\alias{as.weight}
 \title{Weighted probability vectors: \code{hyper3} objects}
 \description{
 
 Objects of class \code{hyper3} are a generalization of \code{hyper2} objects
 that allow the brackets to contain weighted probabilities.
+
+}
+\usage{
+hyper3(B = list(), W = list(), powers = 0, pnames)
+hyper3_bw(B = list(), W = list(), powers = 0, pnames)
+hyper3_nv(L=list(), powers=0, pnames)
+hyper3_m(M, p, stripzeros=TRUE)
+}
+\arguments{
+  \item{B}{A list of brackets}
+  \item{W}{A list of weights}
+  \item{L}{A list of named vectors}
+  \item{powers}{Numeric vector of powers}
+  \item{pnames}{Character vector of player names}
+  \item{M}{Matrix of weights, column names being player names}
+  \item{p}{Vector of powers, length equal to \code{ncol(M)}}
+  \item{stripzeros}{Boolean with default \code{TRUE} meaning to silently
+    remove all-zero rows of \code{M}}
+}
+\details{
+
 
 As a motivating example, suppose two players with Bradley-Terry
 strengths \eqn{p_1,p_2} play chess where we quantify the first-mover
@@ -72,26 +89,6 @@ many of the weights might be zero.  We see that the weights
 \eqn{w_{ij}}{w_ij} may be arranged as a matrix and this form is taken
 by function \code{hyper3_m()}.
 
-}
-\usage{
-hyper3(B = list(), W = list(), powers = 0, pnames)
-hyper3_bw(B = list(), W = list(), powers = 0, pnames)
-hyper3_nv(L=list(),powers=0,pnames)
-hyper3_m(M,p,stripzeros=TRUE)
-}
-\arguments{
-  \item{B}{A list of brackets}
-  \item{W}{A list of weights}
-  \item{L}{A list of named vectors}
-  \item{powers}{Numeric vector of powers}
-  \item{pnames}{Character vector of player names}
-  \item{M}{Matrix of weights, column names being player names}
-  \item{p}{Vector of powers, length equal to \code{ncol(M)}}
-  \item{stripzeros}{Boolean with default \code{TRUE} meaning to silently
-    remove all-zero rows of \code{M}}
-}
-\details{
-
   \itemize{
 
     \item Function \code{hyper3()} is the user-friendly creation method,
@@ -129,12 +126,13 @@ hyper3_m(M,p,stripzeros=TRUE)
     to the brackets and their weights.
 
     \item Function \code{setweight()} alters the weight of every
-    occurrence of a set of players.  It is vectorised, so
-    \code{setweight(H,c("a","b"),88:89)} sets the weight of \code{a} to
-    88 and \code{b} to 89.  Replacement methods are defined, so
-    \dQuote{\code{H["a"] <- as.weight(3)}} will set the weight of every
-    occurrence of player \code{a} to 3.  If \code{H} is a \code{hyper2}
-    object, it will be coerced to \code{hyper3}.
+    occurrence of a set of players, documented at \code{weights.Rd}. 
+
+    \item Function \code{pnames<-()} operates as expected on
+    \code{hyper3} objects: use \code{pnames(H3) <- new_pnames} to add
+    players.  This idiom can only add players, so \code{new_pnames} must
+    be a superset of \code{pnames(H3)}; also note that the order of the
+    players cannot be changed in this way.
 
   }
 }
@@ -147,23 +145,22 @@ Functionality for \code{hyper3} objects is generally indicated by adding
 a \dQuote{\code{3}} to function names, e.g. \code{gradient()} goes to
 \code{gradient3()}.
 
-Vignette \code{hyper3\_creation} discusses the different creation
+Vignette \code{hyper3_creation} discusses the different creation
 methods for \code{hyper3} objects.
 
 }
-\seealso{\code{\link{hyper2}}}
-
+\seealso{\code{\link{hyper2}}, \code{\link{weights}}}
 \examples{
 
 
-hyper3(B=list("a",c("a","b"),"b"),W=list(1.2,c(1.2,1),1),powers=c(3,4,-7))
-hyper3(list(c(a=1.2),c(b=1),c(a=1.2,b=1)),powers=c(3,4,-7))
+hyper3(B=list("a", c("a","b"),"b"), W=list(1.2,c(1.2,1),1), powers=c(3,4,-7))
+hyper3(list(c(a=1.2), c(b=1), c(a=1.2, b=1)), powers=c(3,4,-7))
 ## Above two objects should be identical.
 
 ## Third method, send a matrix:
-M <- matrix(rpois(15,3),5,3)
+M <- matrix(rpois(15,3), 5, 3)
 colnames(M) <- letters[1:3]
-hyper3(M,c(2,3,-1,-5,1))   # second argument interpreted as powers
+hyper3(M, c(2, 3, -1, -5, 1))   # second argument interpreted as powers
 
 
 
@@ -174,17 +171,17 @@ a <- hyper3()  # default creation method [empty object]
 
 a[c(p1=1.3)] <- 5
 a[c(p2=1  )] <- 2
-a[c(p1=1.3,p2=1)] <- -7
+a[c(p1=1.3, p2=1)] <- -7
 a
 
 chess3  # representative simple hyper3 object
 
 H1 <- rankvec_likelihood(letters[sample(6)])
 H2 <- rankvec_likelihood(letters[sample(6)])
-H1["a"] <- as.weight(1.2)         # "a" has some disadvantage in H1
-H1[c("b","c")] <- as.weight(2:3)  # "b" and "c" have some advantage in H1
-H2[c("c","d")] <- as.weight(1.5)  # "c" and "d" have some advantage in H2
-H1+H2
+H1["a"] <- as.weight(1.2)          # "a" has some disadvantage in H1
+H1[c("b", "c")] <- as.weight(2:3)  # "b" and "c" have some advantage in H1
+H2[c("c", "d")] <- as.weight(1.5)  # "c" and "d" have some advantage in H2
+H1 + H2
 
 }
 

@@ -1,5 +1,11 @@
 \name{pwa}
 \alias{pwa}
+\alias{pwa3}
+\alias{advantage}
+\alias{pwa3_single}
+\alias{pwa23}
+\alias{pwa23_single}
+\alias{pwa23_multiple}
 \alias{chameleon}
 \alias{extra_strength}
 \alias{additional_strength}
@@ -9,40 +15,86 @@
 \title{Player with advantage}
 \description{
 
-Commonly, when considering competitive situations we suspect that one
-player has an advantage of some type which we would like to quantify in
-terms of an additional strength.  Examples might include racing at pole
-position, playing white in chess, or playing soccer at one's home
-ground.  Function \code{pwa()} (\dQuote{player with advantage}) returns
-a modified \code{hyper2} object with the additional strength represented
-as a reified entity.
-
+Confer additional \acronym{BT} strength on specified players, either by
+introducing a reified entity (\code{pwa()} for \code{hyper2} objects) or
+an increased weight (\code{pwa3()} for \code{hyper3} objects).
+  
 }
-\usage{pwa(H, pwa, chameleon = "S")}
+\usage{
+pwa(H, pwa, chameleon = "S", hyper3=FALSE)
+advantage(H, ...)
+pwa3_single(H3, pwa, lambda)
+pwa3(H3, ...)
+pwa23_single(H, pwa, chameleon="S")
+pwa23_multiple(H, pwa, chameleon="S")
+pwa23(H, ...)
+}
+
 \arguments{
   \item{H}{A hyper2 object}
+  \item{H3}{A hyper3 object}
   \item{pwa}{A list of the players with the supposed advantage; may be
     character in the case of a named hyper2 object, or an integer
     vector}
-  \item{chameleon}{String representing the advantage}
+  \item{chameleon}{String representing the advantage, defaulting to
+  \dQuote{\code{S}}, for support or strength}
+  \item{lambda}{Value of person with advantage}
+  \item{hyper3}{In function \code{pwa()}, Boolean with \code{TRUE}
+    meaning to coerce to \code{hyper3} form and apply \code{pwa23()},
+    and default \code{FALSE} meaning to return an error if a
+    \code{hyper3} object would be returned}
+  \item{...}{Further named arguments; see details}
 }
 
 \details{
 
-Given an object of class \code{hyper2} and a competitor \code{a}, we
-replace every occurrence of \code{a} with \code{a+S}, with \code{S}
-representing the extra strength conferred.
+Commonly, when considering competitive situations we suspect that one
+player has an advantage of some type which we would like to quantify in
+terms of an additional strength.  Examples might include racing at pole
+position, playing white in chess, or playing soccer at one's home
+ground.  
 
-However, the function also takes a vector of competitors.  If there is
-more than one competitor, the resulting likelihood function does not
-seem to instantiate any simple situation.  
+Function \code{pwa()} (\dQuote{player with advantage}) returns a
+modified \code{hyper2} object with the additional strength represented
+as a reified entity.
+
+Given \code{H} of class \code{hyper2} and a competitor \code{a},
+\code{pwa(H, "a")} replaces every occurrence of \code{a} in \code{H}
+with \code{a+S}, with \code{S} representing the extra strength
+conferred.
+
+Experimental function \code{advantage()} allows one to use idiom such as
+\code{advantage(H, a="steroids")}, which is sometimes more convenient.
+
+Argument \code{a} must be of length 1.  To give more than one competitor
+an advantage, use \code{pwa23()}.
+
+Function \code{pwa3()} is the \code{hyper3} equivalent; it modifies the
+weight of specified players.  The named argument mechanism
+[e.g. \code{pwa3(H, e=1.2, f=3.4)}] is the same as that of \code{subs()}
+in the \CRANpkg{mvp} package.  If there is exactly one ellipsis
+argument, and it is a named vector, the elements are interpreted as
+name/value pairs, so \code{pwa3(H, c(e=1.2, f=3.4))} works.  Function
+\code{pwa3_single()} is a lower-level helper function that takes a
+single player name and its lambda value as second and third arguments.
+
+Functions in the \code{pwa23()} series coerce their first argument to a
+\code{hyper3()} object.  They allow multiple entities to have multiple
+reified help, so for example we may say
+\code{pwa23(suppfun(letters[1:5]), b="cheat", b="steroids",
+c="steroids", d="cheat")}.  For giving multiple players the same
+advantage [or to give a single player multiple advantages], use
+\code{pwa23_multiple()}, for example
+\code{pwa23_multiple(suppfun(letters[1:5]), letters[2:4], "steroids")};
+the recycling is inherited from \code{paste()}.  Note that if the player
+with advantage does not exist, no change is made to \code{H}.
 
 Nice examples of \code{pwa()} are given in \file{inst/cook.Rmd} and
-\file{inst/universities.Rmd}.
-
+\file{inst/universities.Rmd}, and some discussion of \code{pwa3()} is
+given in \code{inst/pwa3.Rmd}.
 
 }
-\value{Returns an object of class \code{hyper2}.}
+\value{Returns an object of class \code{hyper2} or \code{hyper3}.}
 \author{Robin K. S. Hankin}
 \note{
 
@@ -63,20 +115,22 @@ markdown files in the \file{inst/} directory.
 summary(formula1 |> pwa("Hamilton","pole"))
 
 H <- ordervec2supp(c(a = 2, b = 3, c = 1, d = 5, e = 4))
-pwa(H,'a')
+pwa(H, 'a')
+pwa3_single(H, "a", 1.888)
+
+pwa3(H, b=1.8, c=0.7)
 
 ## Four races between a,b,c,d:
-H1 <- ordervec2supp(c(a = 1, b = 3, c = 4, d = 2))
-H2 <- ordervec2supp(c(a = 0, b = 1, c = 3, d = 2))
-H3 <- ordervec2supp(c(a = 4, b = 2, c = 1, d = 3))
-H4 <- ordervec2supp(c(a = 3, b = 4, c = 1, d = 2))
+H1 <- ordervec2supp(c(a = 1, b = 3, c = 4, d = 2))  # a: 1st, b: 3rd, c: 4th, d: 2nd
+H2 <- ordervec2supp(c(a = 0, b = 1, c = 3, d = 2))  # a: DNF, b: 1st, c: 3rd, d: 2nd
+H3 <- ordervec2supp(c(a = 4, b = 2, c = 1, d = 3))  # a: 4th, b: 2nd, c: 1st, d: 3rd
+H4 <- ordervec2supp(c(a = 3, b = 4, c = 1, d = 2))  # a: 3rd, b: 4th, c: 1st, d: 2nd
 
 ## Now it is revealed that a,b,c had some advantage in races 1,2,3
 ## respectively.  Is there evidence that this advantage exists?
 
 \dontrun{  # takes ~10 seconds, too long for here
-specificp.test(pwa(H1,'a') + pwa(H2,'b') + pwa(H3,'c') + H4,"S")
+specificp.gt.test(pwa(H1,'a') + pwa(H2,'b') + pwa(H3,'c') + H4, "S", 0)
 }
-
 
 }

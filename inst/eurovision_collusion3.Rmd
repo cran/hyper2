@@ -1,0 +1,127 @@
+---
+title: "Eurovision Song Contest: collusion 2022 USING HYPER3"
+output: bookdown::html_document2
+author: "R. K. S. Hankin"
+bibliography: hyper2.bib
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("hyper2")
+library("magrittr")
+options("digits" = 5)
+abbreviated <- TRUE  # change to FALSE for full names
+```
+
+```{r out.width='20%', out.extra='style="float:right; padding:10px"',echo=FALSE}
+knitr::include_graphics(system.file("help/figures/hyper2.png", package = "hyper2"))
+```
+
+<font size="1"> (takes five minute to run without cache; the time is spent in chunk `dotest`)
+</font>
+
+
+To cite the `hyper2` package in publications, please use
+@hankin2017_rmd.  The file `eurovision2022_jury_pre_null.txt`, used
+below, refers to the jury vote for the 2022 Eurovision Song contest,
+pre-nullification; data supplied by Riley Uttley.
+First we specify the matrix as appearing in the Wikipedia page:
+
+```{r, specifymatrix}
+eurovision_table <- as.matrix(read.table("eurovision2022_jury_pre_null.txt", header = TRUE))
+excluded <- c(2, 8, 12, 14,15,16)
+
+contestants <- c(
+"AU", # Australia        1
+"AZ", # Azerbaijan       2 excluded
+"BE", # Belgijm          3
+"CY", # Cyprus           4
+"CZ", # Czech republic   5
+"EE", # Estonia          6
+"FI", # Finland          7
+"GE", # Georgia          8 excluded
+"IE", # Ireland          9 
+"IL", # Israel          10 
+"MT", # Malta           11 
+"ME", # Montenegro      12 excluded 
+"MK", # North Macedonia 13
+"PL", # Poland          14 excluded
+"RO", # Romania         15 excluded
+"SM", # San Marino      16 excluded
+"RS", # Serbia          17
+"SE"  # Sweden          18
+)
+
+(points <- sort(unique(c(eurovision_table)),decreasing=TRUE))
+preference <- eurovision_table*0  
+for(i in seq_along(points)){ preference[eurovision_table == points[i]] <- i }
+preference
+```
+
+```{r}
+contestants[excluded]
+```
+
+
+```{r, morestuff,cache=TRUE}
+H_excluded <- hyper3()
+H_included <- hyper2()
+```
+        
+```{r define_notin}
+text <- "remove this for R >= 4.6-0"
+print(text)
+`%notin%` <- Negate(`%in%`)
+```
+
+```{r makeH, cache=TRUE}
+for(i in excluded){
+    d <- preference[,i,drop=TRUE]
+    d[d==11] <- 0
+    newH <- suppfun(d[!is.na(d)])
+    newH <- newH |> pwa23_multiple(contestants[excluded], "collusion")
+    H_excluded <- H_excluded + newH
+} # i loop closes
+
+for(i in seq_len(ncol(preference))){
+    if(i %notin% excluded){
+        d <- preference[,i,drop=TRUE]
+        d[d==11] <- 0
+        d <- d[!is.na(d)]
+        newH <- suppfun(d)
+        H_included <- H_included + newH
+    }
+} # i loop closes
+```
+
+```{r}
+H_excluded
+```
+
+```{r findmaxboth, cache=TRUE}
+mHex <- maxp(H_excluded)
+mHin <- maxp(H_included)
+```
+
+```{r plotboth}
+dotchart(mHex)
+dotchart(mHin)
+```
+
+```{r calcH, cache=TRUE}
+H <- H_excluded + as.hyper3(H_included)
+```
+```{r dotest, cache=TRUE}
+result <- specificp.gt.test(H, "collusion",0)
+```
+
+```{r}
+result
+```
+
+```{r}
+H_excluded
+summary(H_excluded)
+summary(H)
+```

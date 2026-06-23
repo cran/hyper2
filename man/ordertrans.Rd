@@ -7,14 +7,14 @@ Given an order vector, shuffle so that the players appear in a specified
 order. 
 }
 \usage{
-ordertrans(x,players)
-ordertransplot(ox,oy,plotlims, ...)
+ordertrans(x, players)
+ordertransplot(ox, oy, plotlims, ...)
 }
 \arguments{
   \item{x}{A (generalized) order vector}
   \item{players}{A character vector specifying the order in which the
     players will be listed; if missing, use \code{sort(names(x))}}
-  \item{ox,oy}{Rank vectors}
+  \item{ox, oy}{Rank vectors}
   \item{plotlims}{Length two numeric vector giving x and y plot limits.
     If missing, use sensible default}
   \item{...}{Further arguments, passed to \code{plot()}}
@@ -58,9 +58,9 @@ order statistic is identical:
 > [1] TRUE
 }
 
-There is a nice example of \code{ordertrans()} in
-\code{inst/eurovision.Rmd}, and package vignette \code{ordertrans}
-provides further discussion and examples.
+There are nice examples of \code{ordertrans()} in
+\code{inst/eurovision.Rmd} and \code{inst/carcinoma.Rmd}.  Vignette
+\code{ordertrans} provides further discussion and examples.
 
 Function \code{ordertrans()} takes a second argument which allows the
 user to arrange an order vector into the order specified.
@@ -69,7 +69,7 @@ Function \code{ordertrans()} also works in the context of \code{hyper3}
 objects:
 
 \preformatted{
-x <- c(d=2,a=3,b=1,a=4)
+x <- c(d=2, a=3, b=1, a=4)
 x
 d a b a 
 2 3 1 4 
@@ -102,16 +102,16 @@ functions.
 \seealso{\code{\link{rrank}}}
 \examples{
 
-x <- c(e=4L,a=7L,c=6L,b=1L,f=2L,g=3L,h=5L,i=8L,d=9L)
+x <- c(e=4L, a=7L, c=6L, b=1L, f=2L, g=3L, h=5L, i=8L, d=9L)
 x
-ordertrans(x,letters[1:9])
+ordertrans(x, letters[1:9])
 
 o <- unclass(skating_table)[,1]
 names(o) <- rownames(skating_table)
 o
 ordertrans(o)
 
-ordertrans(sample(icons_maxp),icons)
+ordertrans(sample(icons_maxp), icons)
 
 
 rL <- volvo_maxp   # rL is "ranks Likelihood"
@@ -119,6 +119,6 @@ rL[] <- rank(-volvo_maxp)
 
 r1 <- as.numeric(unclass(volvo_table)[,1])  # ranks race 1
 names(r1) <- rownames(volvo_table)
-ordertransplot(rL,r1,xlab="likelihood rank, all races",ylab="rank, race 1")
+ordertransplot(rL, r1, xlab="likelihood rank, all races", ylab="rank, race 1")
 
 }

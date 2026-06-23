@@ -66,7 +66,8 @@ like_series(p,L,log=TRUE)
 
   But if given a vector of length \code{n-1} [e.g. the value of
   \code{indep()}], then the names are ignored and the entries are
-  interpreted as the BT strengths of \code{pnames(H)[seq_len(n-1)]}:
+  interpreted as the \acronym{BT} strengths of
+  \code{pnames(H)[seq_len(n-1)]}:
 
   \preformatted{
   > loglik(c(0.7,0.2),chess)
@@ -78,12 +79,16 @@ like_series(p,L,log=TRUE)
   (the above applies for \code{H} a \code{hyper2} or \code{hyper3}
   object).
 
+  \code{loglik(p, H)} will throw an error if \code{H} does satisfy the
+  zero-sum power requirement; see \code{?balance} and the
+  \code{zeropower} package vignette.
+  
   Empty brackets are interpreted consistently: that is, zero whatever
   the probability vector (although the print method is not perfect).
   
   }
 \author{Robin K. S. Hankin}
-\seealso{\code{\link{maxp}}}
+\seealso{\code{\link{maxp}}, \code{\link{balance}}}
 \examples{
 data(chess)
 loglik(c(1/3,1/3),chess)

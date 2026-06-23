@@ -10,13 +10,14 @@
 Extract or replace parts of a hyper2 object
 }
 \description{
-Extract or replace parts of a hyper2 object
+Extract or replace parts of a \code{hyper2} object, in accordance with
+\CRANpkg{disordR} discipline.
 }
 \usage{
 \method{[}{hyper2}(x, \dots)
 \method{[}{hyper2}(x, index, \dots) <- value
-assign_lowlevel(x,index,value)
-overwrite_lowlevel(x,value)
+assign_lowlevel(x, index, value)
+overwrite_lowlevel(x, value)
 
 }
 \arguments{
@@ -36,19 +37,20 @@ overwrite_lowlevel(x,value)
  \code{disordR} protocol is used.
 
  If the index argument is missing, viz \code{H1[] <- H2}, this is a
- special case.  Argument \code{H1} must be a \code{hyper2} object, and
+ special case.  Argument \code{H2} must be a \code{hyper2} object, and
  the idiom effectively executes \code{H1[brackets(H2)] <- powers(H2)},
- but more efficiently (note that this operation is well-defined even
- though the order of the brackets is arbitrary).  This special case is
- included in the package because it has a very natural \code{C++}
- expression [function \code{overwrite()} in the \code{src/} directory]
- that was too neat to omit.
+ but more efficiently; note that this operation is well-defined even
+ though (because of \CRANpkg{disordR} discipline) the order of the
+ brackets is arbitrary.  This special case is included in the package
+ because it has a very natural \code{C++} expression [function
+ \code{overwrite()} in the \code{src/} directory] that was too neat to
+ omit.
 
- Altering (incrementing or decrementing) the power of a single bracket
+ Altering (incrementing or decrementing) the power of specified brackets
  is possible using idiom like \code{H[x] <- H[x] + 1}; this is
- documented at \code{Ops.hyper2}, specifically
+ documented at \code{\link{Ops.hyper2}}, specifically
  \code{hyper2_sum_numeric()} and a discussion is given at
- \code{increment.Rd}.
+ \code{\link{increment}}.
  
  Functions \code{assign_lowlevel()} and \code{overwrite_lowlevel()} are
  low-level helper functions and not really intended for the end-user.
